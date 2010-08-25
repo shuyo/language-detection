@@ -15,21 +15,38 @@ import com.cybozu.labs.langdetect.util.LangProfile;
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
 
+/**
+ * 
+ * LangDetect Command Line Interface
+ * 
+ * This is a command line interface of Language Detection Library "LandDetect".
+ * 
+ * 
+ * @author Nakatani Shuyo / Cybozu Labs, Inc.
+ *
+ */
 public class Command {
-    private static final double ALPHA = 1;
+    private static final double DEFAULT_ALPHA = 1;
     private HashMap<String, String> opt_with_value = new HashMap<String, String>();
     private HashMap<String, String> values = new HashMap<String, String>();
     private HashSet<String> opt_without_value = new HashSet<String>();
     private ArrayList<String> arglist = new ArrayList<String>();
 
-    private void add(String opt, String key, String value) {
+    public void addOpt(String opt, String key, String value) {
         opt_with_value.put(opt, key);
         values.put(key, value);
     }
-    private String get(String key) {
+    public String get(String key) {
         return values.get(key);
     }
-    private void parse(String[] args) {
+    public double getDouble(String key, double defaultValue) {
+        try {
+            return Double.valueOf(values.get(key));
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+    public void parse(String[] args) {
         for(int i=0;i<args.length;++i) {
             if (opt_with_value.containsKey(args[i])) {
                 String key = opt_with_value.get(args[i]);
@@ -43,11 +60,11 @@ public class Command {
         }
     }
 
-    private boolean hasOpt(String opt) {
+    public boolean hasOpt(String opt) {
         return opt_without_value.contains(opt);
     }
 
-    private void generateProfile() {
+    public void generateProfile() {
         String directory = get("directory") + "/"; 
         for (String lang: arglist) {
             String filename = directory + lang + "wiki-latest-abstract.xml.gz";
@@ -72,11 +89,12 @@ public class Command {
         }        
     }
 
-    private void detect() {
+    public void detectLang() {
         String profileDirectory = get("directory") + "/"; 
         DetectorFactory.loadProfile(profileDirectory);
         for (String filename: arglist) {
-            Detector detector = DetectorFactory.create(ALPHA);
+            Detector detector = DetectorFactory.create(getDouble("alpha", DEFAULT_ALPHA));
+            if (hasOpt("--debug")) detector.setDebug();
             BufferedReader is = null;
             try {
                 is = new BufferedReader(new InputStreamReader(new FileInputStream(filename), "utf-8"));
@@ -101,7 +119,17 @@ public class Command {
         }
     }
 
-    private void batchtest() {
+    /**
+     * Batch Testing of Language Detection (--batchtest option)
+     * 
+     * 
+     * usage: --batchtest -d [profile directory] -a [alpha] [test data(s)]
+     * 
+     * The format of test data(s):
+     *   [correct language name]\t[text body for test]\n
+     *  
+     */
+    public void batchTest() {
         String profileDirectory = get("directory") + "/"; 
         DetectorFactory.loadProfile(profileDirectory);
         HashMap<String, ArrayList<String>> result = new HashMap<String, ArrayList<String>>();
@@ -111,12 +139,12 @@ public class Command {
                 is = new BufferedReader(new InputStreamReader(new FileInputStream(filename), "utf-8"));
                 while (is.ready()) {
                     String line = is.readLine();
-                    int i = line.indexOf('\t');
-                    if (i<=0) continue;
-                    String correctLang = line.substring(0, i);
-                    String text = line.substring(i+1);
+                    int idx = line.indexOf('\t');
+                    if (idx <= 0) continue;
+                    String correctLang = line.substring(0, idx);
+                    String text = line.substring(idx + 1);
                     
-                    Detector detector = DetectorFactory.create(ALPHA);
+                    Detector detector = DetectorFactory.create(getDouble("alpha", DEFAULT_ALPHA));
                     for(int j=0;j<text.length();++j) {
                         detector.append(text.charAt(j));
                         if (detector.isConvergence()) break;
@@ -124,6 +152,7 @@ public class Command {
                     String lang = detector.detect();
                     if (!result.containsKey(correctLang)) result.put(correctLang, new ArrayList<String>());
                     result.get(correctLang).add(lang);
+                    if (hasOpt("--debug")) System.out.println(correctLang + "," + lang + "," + text.substring(0, 100));
                 }
                 
             } catch (IOException e) {
@@ -134,7 +163,26 @@ public class Command {
                     if (is!=null) is.close();
                 } catch (IOException e) {}
             }
-            System.out.println(result);
+            int totalCount = 0, totalCorrect = 0;
+            for ( String lang :result.keySet()) {
+                HashMap<String, Integer> resultCount = new HashMap<String, Integer>();
+                int count = 0;
+                ArrayList<String> list = result.get(lang);
+                for (String detectedLang: list) {
+                    ++count;
+                    if (resultCount.containsKey(detectedLang)) {
+                        resultCount.put(detectedLang, resultCount.get(detectedLang) + 1);
+                    } else {
+                        resultCount.put(detectedLang, 1);
+                    }
+                }
+                int correct = resultCount.containsKey(lang)?resultCount.get(lang):0;
+                double rate = correct / (double)count;
+                System.out.println(String.format("%s (%d/%d=%.2f): %s", lang, correct, count, rate, resultCount));
+                totalCorrect += correct;
+                totalCount += count;
+            }
+            System.out.println(String.format("total: %d/%d = %.3f", totalCorrect, totalCount, totalCorrect / (double)totalCount));
             
         }
         
@@ -145,15 +193,16 @@ public class Command {
      */
     public static void main(String[] args) {
         Command command = new Command();
-        command.add("-d", "directory", "./");
+        command.addOpt("-d", "directory", "./");
+        command.addOpt("-a", "alpha", "" + DEFAULT_ALPHA);
         command.parse(args);
 
-        if (command.hasOpt("-gp")) {
+        if (command.hasOpt("--genprofile")) {
             command.generateProfile();
-        } else if (command.hasOpt("-ld")) {
-            command.detect();
-        } else if (command.hasOpt("-bt")) {
-            command.batchtest();
+        } else if (command.hasOpt("--detectlang")) {
+            command.detectLang();
+        } else if (command.hasOpt("--batchtest")) {
+            command.batchTest();
         }
     }
 }

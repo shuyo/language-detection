@@ -37,7 +37,7 @@ public class NGram {
         }
     }
     
-    private char normalize(char ch) {
+    public char normalize(char ch) {
         Character.UnicodeBlock block = Character.UnicodeBlock.of(ch);
         if (block == UnicodeBlock.BASIC_LATIN) {
             if (ch<'A' || (ch<'a' && ch >'Z') || ch>'z') ch = ' ';

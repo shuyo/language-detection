@@ -6,7 +6,7 @@ import java.util.Set;
 
 public class LangProfile {
     private static final int MINIMUM_FREQ = 3;
-    private static final int LESS_FREQ_RATIO = 10000;
+    private static final int LESS_FREQ_RATIO = 20000;
     public String name;
     public HashMap<String, Integer> freq;
     public int[] n_words;

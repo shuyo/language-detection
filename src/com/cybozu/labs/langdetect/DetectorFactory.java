@@ -12,10 +12,10 @@ import net.arnx.jsonic.JSONException;
 import com.cybozu.labs.langdetect.util.LangProfile;
 
 public class DetectorFactory {
-    public HashMap<String, HashMap<String, Double>> p_ik;
-    public ArrayList<String> langlist;
+    private HashMap<String, HashMap<String, Double>> wordLangProbMap;
+    private ArrayList<String> langlist;
     private DetectorFactory() {
-        p_ik = new HashMap<String, HashMap<String, Double>>();
+        wordLangProbMap = new HashMap<String, HashMap<String, Double>>();
         langlist = new ArrayList<String>();
     }
     static private DetectorFactory instance_ = new DetectorFactory();
@@ -23,6 +23,7 @@ public class DetectorFactory {
     public static void loadProfile(String profileDirectory) {
         File dir = new File(profileDirectory);
         for (File file: dir.listFiles()) {
+            if (file.getName().startsWith(".") || !file.isFile()) continue;
             FileInputStream is = null;
             try {
                 is = new FileInputStream(file);
@@ -38,8 +39,7 @@ public class DetectorFactory {
                 e.printStackTrace();
             } finally {
                 try {
-                    if (is!=null)
-                        is.close();
+                    if (is!=null) is.close();
                 } catch (IOException e) {}
             }
         }
@@ -53,19 +53,19 @@ public class DetectorFactory {
         }
         instance_.langlist.add(lang);
         for (String word: profile.freq.keySet()) {
-            if (!instance_.p_ik.containsKey(word)) {
-                instance_.p_ik.put(word, new HashMap<String, Double>());
+            if (!instance_.wordLangProbMap.containsKey(word)) {
+                instance_.wordLangProbMap.put(word, new HashMap<String, Double>());
             }
             double prob = profile.freq.get(word).doubleValue() / profile.n_words[word.length()-1];
-            instance_.p_ik.get(word).put(lang, prob);
+            instance_.wordLangProbMap.get(word).put(lang, prob);
         }
     }
     public static Detector create() {
-        return new Detector(instance_);
+        return new Detector(instance_.wordLangProbMap, instance_.langlist);
     }
 
     public static Detector create(double alpha) {
-        Detector detector = new Detector(instance_);
+        Detector detector = new Detector(instance_.wordLangProbMap, instance_.langlist);
         detector.setAlpha(alpha);
         return detector;
     }
