@@ -67,7 +67,7 @@ public class Detector {
             prob.put(lang, p);
         }
         if (maxProb > CONV_THRESHOLD) convergence = true; 
-        if (debug) System.out.println(getProbabilities());
+        if (debug) System.out.println("=> " + ch + ":" + getProbabilities());
     }
     
     public ArrayList<Language> getProbabilities() {

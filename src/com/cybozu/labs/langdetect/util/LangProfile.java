@@ -42,13 +42,32 @@ public class LangProfile {
         if (threshold < MINIMUM_FREQ) threshold = MINIMUM_FREQ;
         
         Set<String> keys = freq.keySet();
+        int roman = 0;
         for(Iterator<String> i = keys.iterator(); i.hasNext(); ){
             String key = i.next();
             int count = freq.get(key);
             if (count <= threshold) {
                 n_words[key.length()-1] -= count; 
                 i.remove();
+            } else {
+                if (key.matches("^[A-Za-z]$")) {
+                    roman += count;
+                }
             }
+        }
+
+        // roman check
+        if (roman < n_words[0] / 3) {
+            System.out.println("roman "+roman+"/"+n_words[0]);
+            Set<String> keys2 = freq.keySet();
+            for(Iterator<String> i = keys2.iterator(); i.hasNext(); ){
+                String key = i.next();
+                if (key.matches(".*[A-Za-z].*")) {
+                    n_words[key.length()-1] -= freq.get(key); 
+                    i.remove();
+                }
+            }
+            
         }
     }
 }
