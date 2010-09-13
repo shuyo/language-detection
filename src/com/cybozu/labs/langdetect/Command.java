@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -64,18 +65,28 @@ public class Command {
         return opt_without_value.contains(opt);
     }
 
+    public File searchFile(File directory, String pattern) {
+        for(File file : directory.listFiles()) {
+            if (file.getName().matches(pattern)) return file;
+        }
+        return null;
+    }
+    
     public void generateProfile() {
-        String directory = get("directory") + "/"; 
+        File directory = new File(get("directory"));
         for (String lang: arglist) {
-            String filename = directory + lang + "wiki-latest-abstract.xml.gz";
-
-            LangProfile profile = GenProfile.load(lang, filename);
+            File file = searchFile(directory, lang + "wiki-.*-abstract\\.xml.*");
+            if (file == null) {
+                System.err.println("Not Found abstract xml : lang = " + lang);
+                continue;
+            }
+            LangProfile profile = GenProfile.load(lang, file);
             profile.omitLessFreq();
 
-            File file = new File(directory + "profiles/" + lang);
+            File profile_path = new File(get("directory") + "/profiles/" + lang);
             FileOutputStream os = null;
             try {
-                os = new FileOutputStream(file);
+                os = new FileOutputStream(profile_path);
                 JSON.encode(profile, os);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -98,6 +109,8 @@ public class Command {
             BufferedReader is = null;
             try {
                 is = new BufferedReader(new InputStreamReader(new FileInputStream(filename), "utf-8"));
+                detector.append(is);
+/*
                 char[] buf = new char[1024]; 
                 while (is.ready()) {
                     int length = is.read(buf);
@@ -106,6 +119,7 @@ public class Command {
                         if (detector.isConvergence()) break;
                     }
                 }
+*/
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -145,10 +159,13 @@ public class Command {
                     String text = line.substring(idx + 1);
                     
                     Detector detector = DetectorFactory.create(getDouble("alpha", DEFAULT_ALPHA));
+                    detector.append(text);
+/*
                     for(int j=0;j<text.length();++j) {
                         detector.append(text.charAt(j));
                         if (detector.isConvergence()) break;
                     }
+*/
                     String lang = detector.detect();
                     if (!result.containsKey(correctLang)) result.put(correctLang, new ArrayList<String>());
                     result.get(correctLang).add(lang);
@@ -163,8 +180,12 @@ public class Command {
                     if (is!=null) is.close();
                 } catch (IOException e) {}
             }
+
+            ArrayList<String> langlist = new ArrayList<String>(result.keySet());
+            Collections.sort(langlist);
+
             int totalCount = 0, totalCorrect = 0;
-            for ( String lang :result.keySet()) {
+            for ( String lang :langlist) {
                 HashMap<String, Integer> resultCount = new HashMap<String, Integer>();
                 int count = 0;
                 ArrayList<String> list = result.get(lang);

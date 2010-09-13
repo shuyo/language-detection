@@ -26,17 +26,17 @@ public class GenProfile {
 
     /**
      * @param lang
-     * @param filename
+     * @param file
      * @return
      */
-    public static LangProfile load(String lang, String filename) {
+    public static LangProfile load(String lang, File file) {
 
         LangProfile profile = new LangProfile(lang, NGram.N_GRAM);
 
         InputStream is = null;
         try {
-            is = new BufferedInputStream(new FileInputStream(new File(filename)));
-            if (filename.endsWith(".gz")) is = new GZIPInputStream(is);
+            is = new BufferedInputStream(new FileInputStream(file));
+            if (file.getName().endsWith(".gz")) is = new GZIPInputStream(is);
 
             TagExtractor tagextractor = new TagExtractor("abstract", 100);
 

@@ -58,7 +58,6 @@ public class LangProfile {
 
         // roman check
         if (roman < n_words[0] / 3) {
-            System.out.println("roman "+roman+"/"+n_words[0]);
             Set<String> keys2 = freq.keySet();
             for(Iterator<String> i = keys2.iterator(); i.hasNext(); ){
                 String key = i.next();
