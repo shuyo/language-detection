@@ -1,7 +1,7 @@
 package com.cybozu.labs.langdetect;
 
-import java.io.BufferedReader;
 import java.io.File;
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,27 +27,20 @@ import net.arnx.jsonic.JSONException;
  *
  */
 public class Command {
-    private static final double DEFAULT_ALPHA = 1;
+    /** smoothing default parameter (ELE) */
+    private static final double DEFAULT_ALPHA = 0.5;
+
+    /** for Command line easy parser */
     private HashMap<String, String> opt_with_value = new HashMap<String, String>();
     private HashMap<String, String> values = new HashMap<String, String>();
     private HashSet<String> opt_without_value = new HashSet<String>();
     private ArrayList<String> arglist = new ArrayList<String>();
 
-    public void addOpt(String opt, String key, String value) {
-        opt_with_value.put(opt, key);
-        values.put(key, value);
-    }
-    public String get(String key) {
-        return values.get(key);
-    }
-    public double getDouble(String key, double defaultValue) {
-        try {
-            return Double.valueOf(values.get(key));
-        } catch (NumberFormatException e) {
-            return defaultValue;
-        }
-    }
-    public void parse(String[] args) {
+    /**
+     * Command line easy parser
+     * @param args comandline arguments
+     */
+    private void parse(String[] args) {
         for(int i=0;i<args.length;++i) {
             if (opt_with_value.containsKey(args[i])) {
                 String key = opt_with_value.get(args[i]);
@@ -61,17 +54,46 @@ public class Command {
         }
     }
 
-    public boolean hasOpt(String opt) {
+    private void addOpt(String opt, String key, String value) {
+        opt_with_value.put(opt, key);
+        values.put(key, value);
+    }
+    private String get(String key) {
+        return values.get(key);
+    }
+    private double getDouble(String key, double defaultValue) {
+        try {
+            return Double.valueOf(values.get(key));
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    private boolean hasOpt(String opt) {
         return opt_without_value.contains(opt);
     }
 
-    public File searchFile(File directory, String pattern) {
+        
+    /**
+     * File search (easy glob)
+     * @param directory directory path
+     * @param pattern   searching file pattern with regular representation
+     * @return matched file
+     */
+    private File searchFile(File directory, String pattern) {
         for(File file : directory.listFiles()) {
             if (file.getName().matches(pattern)) return file;
         }
         return null;
     }
+
     
+    /**
+     * Generate Language Profile from Wikipedia Abstract Database File
+     * 
+     * usage: --genprofile -d [abstracts directory] [language names]
+     * 
+     */
     public void generateProfile() {
         File directory = new File(get("directory"));
         for (String lang: arglist) {
@@ -100,26 +122,22 @@ public class Command {
         }        
     }
 
+    /**
+     * Language detection test for each file (--detectlang option)
+     * 
+     * usage: --detectlang -d [profile directory] -a [alpha] [test file(s)]
+     * 
+     */
     public void detectLang() {
         String profileDirectory = get("directory") + "/"; 
         DetectorFactory.loadProfile(profileDirectory);
         for (String filename: arglist) {
             Detector detector = DetectorFactory.create(getDouble("alpha", DEFAULT_ALPHA));
-            if (hasOpt("--debug")) detector.setDebug();
+            if (hasOpt("--debug")) detector.setVerbose();
             BufferedReader is = null;
             try {
                 is = new BufferedReader(new InputStreamReader(new FileInputStream(filename), "utf-8"));
                 detector.append(is);
-/*
-                char[] buf = new char[1024]; 
-                while (is.ready()) {
-                    int length = is.read(buf);
-                    for(int i=0;i<length;++i) {
-                        detector.append(buf[i]);
-                        if (detector.isConvergence()) break;
-                    }
-                }
-*/
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -134,8 +152,7 @@ public class Command {
     }
 
     /**
-     * Batch Testing of Language Detection (--batchtest option)
-     * 
+     * Batch Test of Language Detection (--batchtest option)
      * 
      * usage: --batchtest -d [profile directory] -a [alpha] [test data(s)]
      * 
@@ -169,7 +186,7 @@ public class Command {
                     String lang = detector.detect();
                     if (!result.containsKey(correctLang)) result.put(correctLang, new ArrayList<String>());
                     result.get(correctLang).add(lang);
-                    if (hasOpt("--debug")) System.out.println(correctLang + "," + lang + "," + text.substring(0, 100));
+                    if (hasOpt("--debug")) System.out.println(correctLang + "," + lang + "," + (text.length()>100?text.substring(0, 100):text));
                 }
                 
             } catch (IOException e) {
@@ -210,7 +227,8 @@ public class Command {
     }
 
     /**
-     * @param args
+     * Command Line Interface
+     * @param args command line arguments
      */
     public static void main(String[] args) {
         Command command = new Command();
