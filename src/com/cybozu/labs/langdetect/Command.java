@@ -38,7 +38,7 @@ public class Command {
 
     /**
      * Command line easy parser
-     * @param args comandline arguments
+     * @param args command line arguments
      */
     private void parse(String[] args) {
         for(int i=0;i<args.length;++i) {

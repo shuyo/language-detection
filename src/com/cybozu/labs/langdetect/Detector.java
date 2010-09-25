@@ -10,6 +10,12 @@ import java.util.regex.Pattern;
 
 import com.cybozu.labs.langdetect.util.NGram;
 
+/**
+ * Language Detector Class
+ * 
+ * @author Nakatani Shuyo
+ *
+ */
 public class Detector {
     private static final double ALPHA_DEFAULT = 0.5;
     private static final double ALPHA_WIDTH = 0.05;
@@ -20,7 +26,7 @@ public class Detector {
     private static final int MAX_BLOCK_TEXT = 10000;
     private static final double PROB_THRESHOLD = 0.1;
     private static final double CONV_THRESHOLD = 0.99999;
-    private static final int BASE = 100;
+    private static final int BASE = 10000;
 
     private static final Pattern URL_REGEX = Pattern.compile("https?://[-_.?&~;+=/#0-9A-Za-z]+");
     private static final Pattern MAIL_REGEX = Pattern.compile("[-_.0-9A-Za-z]+@[-_0-9A-Za-z]+[-_.0-9A-Za-z]+");
