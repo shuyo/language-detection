@@ -12,9 +12,35 @@ import com.cybozu.labs.langdetect.util.NGram;
 
 /**
  * Language Detector Class
+ * <p>
+ * 
+ * This class is able to be constructed via the factory class {@link DetectorFactory}.
+ * 
+ * <pre>
+ * import java.util.ArrayList;
+ * import com.cybozu.labs.langdetect.Detector;
+ * import com.cybozu.labs.langdetect.DetectorFactory;
+ * import com.cybozu.labs.langdetect.Language;
+ * 
+ * class LangDetectSample {
+ *     public void init(String profileDirectory) {
+ *         DetectorFactory.loadProfile(profileDirectory);
+ *     }
+ *     public String detect(String text) {
+ *         Detector detector = DetectorFactory.create();
+ *         detector.append(text);
+ *         return detector.detect();
+ *     }
+ *     public ArrayList<Language> detectLangs(String text) {
+ *         Detector detector = DetectorFactory.create();
+ *         detector.append(text);
+ *         return detector.getProbabilities();
+ *     }
+ * }
+ * </pre>
  * 
  * @author Nakatani Shuyo
- *
+ * @see DetectorFactory
  */
 public class Detector {
     private static final double ALPHA_DEFAULT = 0.5;
@@ -39,6 +65,10 @@ public class Detector {
     private StringBuffer text;
     private ArrayList<ArrayList<String>> ngrams;
 
+    /**
+     * @param p_ik
+     * @param langlist
+     */
     public Detector(HashMap<String, HashMap<String, Double>> p_ik, ArrayList<String> langlist) {
         this.wordLangProbMap = p_ik;
         this.langlist = langlist;
@@ -49,14 +79,24 @@ public class Detector {
         for(int i=0;i<NGram.N_GRAM;++i) ngrams.add((new ArrayList<String>()));
     }
 
+    /**
+     * 
+     */
     public void setVerbose() {
         verbose = true;
     }
 
+    /**
+     * @param alpha
+     */
     public void setAlpha(double alpha) {
         this.alpha = alpha;
     }
 
+    /**
+     * @param is
+     * @throws IOException
+     */
     public void append(Reader is) throws IOException {
         char[] buf = new char[MAX_BLOCK_TEXT/2];
         while (text.length() < MAX_BLOCK_TEXT && is.ready()) {
@@ -65,6 +105,9 @@ public class Detector {
         }
     }
 
+    /**
+     * @param buf
+     */
     public void append(String buf) {
         buf = URL_REGEX.matcher(buf).replaceAll(" ");
         buf = MAIL_REGEX.matcher(buf).replaceAll(" ");
@@ -104,29 +147,34 @@ public class Detector {
     /**
      * 
      * @return detected language name which has most probability.
+     * @throws LangDetectException 
      */
-    public String detect() {
+    public String detect() throws LangDetectException {
         ArrayList<Language> probabilities = getProbabilities();
         if (probabilities.size() > 0) return probabilities.get(0).lang;
         return UNKNOWN_LANG;
     }
 
     /**
-     * 
-     * @return possible languages list (whose probabilities are over PROB_THRESHOLD, ordered by probability
+     * Get language candidates which have high probabilities
+     * @return possible languages list (whose probabilities are over PROB_THRESHOLD, ordered by probabilities descendently
+     * @throws LangDetectException 
      */
-    public ArrayList<Language> getProbabilities() {
+    public ArrayList<Language> getProbabilities() throws LangDetectException {
         if (langprob == null) detectBlock();
 
         ArrayList<Language> list = sortProbability(langprob);
         return list;
     }
     
-    private void detectBlock() {
+    /**
+     * @throws LangDetectException 
+     * 
+     */
+    private void detectBlock() throws LangDetectException {
         cleaningText();
         if (text.length()==0) {
-            // TODO throw exception
-            return;
+            throw new LangDetectException(ErrorCode.NoTextError, "no text error");
         }
 
         ArrayList<String> ngrams = extractNGrams();
@@ -160,6 +208,9 @@ public class Detector {
         for(String lang: langlist) langprob.put(lang, langprob.get(lang) / N_TRIALS);
     }
 
+    /**
+     * @return
+     */
     private ArrayList<String> extractNGrams() {
         ArrayList<String> list = new ArrayList<String>();
         NGram ngram = new NGram();
@@ -196,6 +247,11 @@ public class Detector {
         return true;
     }
 
+    /**
+     * unicode encoding (for debug dump)
+     * @param word
+     * @return
+     */
     static private String unicodeEncode(String word) {
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < word.length(); ++i) {
@@ -227,8 +283,8 @@ public class Detector {
     }
 
     /**
-     * @param prob 
-     * @return
+     * @param probabilities HashMap
+     * @return lanugage candidates order by probabilities descendently
      */
     static private ArrayList<Language> sortProbability(HashMap<String, Double> prob) {
         ArrayList<Language> list = new ArrayList<Language>();

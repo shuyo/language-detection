@@ -25,9 +25,10 @@ import com.cybozu.labs.langdetect.util.TagExtractor;
 public class GenProfile {
 
     /**
-     * @param lang
-     * @param file
-     * @return
+     * Load Wikipedia abstract database file and generate its language profile
+     * @param lang target language name
+     * @param file target database file path
+     * @return Language profile instance
      */
     public static LangProfile load(String lang, File file) {
 

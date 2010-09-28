@@ -3,19 +3,34 @@ package com.cybozu.labs.langdetect.util;
 import java.lang.Character.UnicodeBlock;
 import java.util.HashMap;
 
+/**
+ * @author Nakatani Shuyo
+ *
+ */
 public class NGram {
-    private static final String LATIN1_EXCLUDED = Messages.getString("NGram.LATIN1_EXCLUDE"); //$NON-NLS-1$
+    private static final String LATIN1_EXCLUDED = Messages.getString("NGram.LATIN1_EXCLUDE");
     public final static int N_GRAM = 3;
     public static HashMap<Character, Character> cjk_map; 
     
     private StringBuffer grams_;
     private boolean capitalword_;
 
+    /**
+     * 
+     */
+    public NGram() {
+        grams_ = new StringBuffer(" ");
+        capitalword_ = false;
+    }
+
+    /**
+     * @param ch
+     */
     public void addChar(char ch) {
         ch = normalize(ch);
         char lastchar = grams_.charAt(grams_.length() - 1);
         if (lastchar == ' ') {
-            grams_ = new StringBuffer(" "); //$NON-NLS-1$
+            grams_ = new StringBuffer(" ");
             capitalword_ = false;
             if (ch==' ') return;
         } else if (grams_.length() >= N_GRAM) {
@@ -30,11 +45,11 @@ public class NGram {
         }
     }
 
-    public NGram() {
-        grams_ = new StringBuffer(" "); //$NON-NLS-1$
-        capitalword_ = false;
-    }
-
+    /**
+     * Get n-Gram
+     * @param n
+     * @return n-Gram String (null if it is invalid)
+     */
     public String get(int n) {
         if (capitalword_) return null;
         int len = grams_.length(); 
@@ -48,6 +63,11 @@ public class NGram {
         }
     }
     
+    /**
+     * Character Normalization
+     * @param ch
+     * @return Normalized character
+     */
     static public char normalize(char ch) {
         Character.UnicodeBlock block = Character.UnicodeBlock.of(ch);
         if (block == UnicodeBlock.BASIC_LATIN) {
@@ -77,7 +97,7 @@ public class NGram {
 
     
     /**
-     * CJK Kanji List for General Use
+     * CJK Kanji Normalization Mapping
      */
     static final String[] CJK_CLASS = {
         Messages.getString("NGram.KANJI_1_0"),

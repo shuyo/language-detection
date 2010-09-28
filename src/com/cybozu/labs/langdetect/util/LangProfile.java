@@ -4,6 +4,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * Language Profile Class for Profile Generator
+ *
+ * This class is not used when language detection.
+ * @author Nakatani Shuyo
+ */
 public class LangProfile {
     private static final int MINIMUM_FREQ = 3;
     private static final int LESS_FREQ_RATIO = 10000;
@@ -27,6 +33,9 @@ public class LangProfile {
         freq = new HashMap<String, Integer>();
     }
     
+    /**
+     * @param word
+     */
     public void add(String word) {
         if (word == null) return;
         ++n_words[word.length() - 1];
@@ -37,6 +46,9 @@ public class LangProfile {
         }
     }
 
+    /**
+     * Eliminate below less frequency n-grams and noise Latin alphabets
+     */
     public void omitLessFreq() {
         int threshold = n_words[0] / LESS_FREQ_RATIO;
         if (threshold < MINIMUM_FREQ) threshold = MINIMUM_FREQ;

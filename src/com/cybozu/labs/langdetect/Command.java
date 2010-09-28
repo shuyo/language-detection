@@ -19,11 +19,11 @@ import net.arnx.jsonic.JSONException;
 /**
  * 
  * LangDetect Command Line Interface
- * 
+ * <p>
  * This is a command line interface of Language Detection Library "LandDetect".
  * 
  * 
- * @author Nakatani Shuyo / Cybozu Labs, Inc.
+ * @author Nakatani Shuyo
  *
  */
 public class Command {
@@ -87,6 +87,21 @@ public class Command {
         return null;
     }
 
+
+    /**
+     * load profiles
+     * @return false if load success
+     */
+    private boolean loadProfile() {
+        String profileDirectory = get("directory") + "/"; 
+        try {
+            DetectorFactory.loadProfile(profileDirectory);
+            return false;
+        } catch (LangDetectException e) {
+            System.err.println("ERROR: " + e.getMessage());
+            return true;
+        }
+    }
     
     /**
      * Generate Language Profile from Wikipedia Abstract Database File
@@ -129,8 +144,7 @@ public class Command {
      * 
      */
     public void detectLang() {
-        String profileDirectory = get("directory") + "/"; 
-        DetectorFactory.loadProfile(profileDirectory);
+        if (loadProfile()) return;
         for (String filename: arglist) {
             Detector detector = DetectorFactory.create(getDouble("alpha", DEFAULT_ALPHA));
             if (hasOpt("--debug")) detector.setVerbose();
@@ -138,7 +152,11 @@ public class Command {
             try {
                 is = new BufferedReader(new InputStreamReader(new FileInputStream(filename), "utf-8"));
                 detector.append(is);
+                System.out.println(filename + ":" + detector.getProbabilities());
             } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (LangDetectException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             } finally {
@@ -146,7 +164,6 @@ public class Command {
                     if (is!=null) is.close();
                 } catch (IOException e) {}
             }
-            System.out.println(filename + ":" + detector.getProbabilities());
 
         }
     }
@@ -161,8 +178,7 @@ public class Command {
      *  
      */
     public void batchTest() {
-        String profileDirectory = get("directory") + "/"; 
-        DetectorFactory.loadProfile(profileDirectory);
+        if (loadProfile()) return;
         HashMap<String, ArrayList<String>> result = new HashMap<String, ArrayList<String>>();
         for (String filename: arglist) {
             BufferedReader is = null;
@@ -190,6 +206,9 @@ public class Command {
                 }
                 
             } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (LangDetectException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             } finally {
