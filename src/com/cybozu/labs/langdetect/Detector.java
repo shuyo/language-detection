@@ -11,10 +11,16 @@ import java.util.regex.Pattern;
 import com.cybozu.labs.langdetect.util.NGram;
 
 /**
- * Language Detector Class
+ * {@link Detector} class is to detect language from specified text. 
+ * Its instance is able to be constructed via the factory class {@link DetectorFactory}.
  * <p>
- * 
- * This class is able to be constructed via the factory class {@link DetectorFactory}.
+ * After appending a target text to the {@link Detector} instance with {@link #append(Reader)} or {@link #append(String)},
+ * the detector provides the language detection results for target text via {@link #detect()} or {@link #getProbabilities()}.
+ * {@link #detect()} method returns a single language name which has the highest probability.
+ * {@link #getProbabilities()} methods returns a list of multiple languages and their probabilities.
+ * <p>  
+ * The detector has some parameters for language detection.
+ * See {@link #setAlpha(double)}, {@link #setMax_text_length(int)} and {@link #setPriorMap(HashMap)}.
  * 
  * <pre>
  * import java.util.ArrayList;
@@ -23,15 +29,15 @@ import com.cybozu.labs.langdetect.util.NGram;
  * import com.cybozu.labs.langdetect.Language;
  * 
  * class LangDetectSample {
- *     public void init(String profileDirectory) {
+ *     public void init(String profileDirectory) throws LangDetectException {
  *         DetectorFactory.loadProfile(profileDirectory);
  *     }
- *     public String detect(String text) {
+ *     public String detect(String text) throws LangDetectException {
  *         Detector detector = DetectorFactory.create();
  *         detector.append(text);
  *         return detector.detect();
  *     }
- *     public ArrayList<Language> detectLangs(String text) {
+ *     public ArrayList<Language> detectLangs(String text) throws LangDetectException {
  *         Detector detector = DetectorFactory.create();
  *         detector.append(text);
  *         return detector.getProbabilities();
@@ -46,75 +52,103 @@ public class Detector {
     private static final double ALPHA_DEFAULT = 0.5;
     private static final double ALPHA_WIDTH = 0.05;
 
-    private static final String UNKNOWN_LANG = "unknown";
-    private static final int N_TRIALS = 7;
     private static final int ITERATION_LIMIT = 1000;
-    private static final int MAX_BLOCK_TEXT = 10000;
     private static final double PROB_THRESHOLD = 0.1;
     private static final double CONV_THRESHOLD = 0.99999;
-    private static final int BASE = 10000;
+    private static final int BASE_FREQ = 10000;
+    private static final String UNKNOWN_LANG = "unknown";
 
     private static final Pattern URL_REGEX = Pattern.compile("https?://[-_.?&~;+=/#0-9A-Za-z]+");
     private static final Pattern MAIL_REGEX = Pattern.compile("[-_.0-9A-Za-z]+@[-_0-9A-Za-z]+[-_.0-9A-Za-z]+");
     
     private final HashMap<String, HashMap<String, Double>> wordLangProbMap;
     private final ArrayList<String> langlist;
-    private HashMap<String, Double> langprob = null;
-    private double alpha;
-    private boolean verbose;
+
     private StringBuffer text;
-    private ArrayList<ArrayList<String>> ngrams;
+    private HashMap<String, Double> langprob = null;
+
+    private double alpha = ALPHA_DEFAULT;
+    private int n_trial = 7;
+    private int max_text_length = 10000;
+    private HashMap<String, Double> priorMap = null;
+    private boolean verbose = false;
 
     /**
-     * @param p_ik
-     * @param langlist
+     * Constructor.
+     * Detector instance can be constructed via {@link DetectorFactory#create()}.
+     * @param factory {@link DetectorFactory} instance (only DetectorFactory inside)
      */
-    public Detector(HashMap<String, HashMap<String, Double>> p_ik, ArrayList<String> langlist) {
-        this.wordLangProbMap = p_ik;
-        this.langlist = langlist;
-        alpha = ALPHA_DEFAULT;
-        verbose = false;
+    public Detector(DetectorFactory factory) {
+        this.wordLangProbMap = factory.wordLangProbMap;
+        this.langlist = factory.langlist;
         text = new StringBuffer();
-        ngrams = new ArrayList<ArrayList<String>>();
-        for(int i=0;i<NGram.N_GRAM;++i) ngrams.add((new ArrayList<String>()));
     }
 
     /**
-     * 
+     * Set Verbose Mode(use for debug).
      */
     public void setVerbose() {
         verbose = true;
     }
 
     /**
-     * @param alpha
+     * Set smoothing parameter.
+     * The default value is 0.5(i.e. Expected Likelihood Estimate).
+     * @param alpha the smoothing parameter
      */
     public void setAlpha(double alpha) {
         this.alpha = alpha;
     }
 
     /**
-     * @param is
-     * @throws IOException
+     * Set prior information about language probabilities.
+     * @param priorMap the priorMap to set
      */
-    public void append(Reader is) throws IOException {
-        char[] buf = new char[MAX_BLOCK_TEXT/2];
-        while (text.length() < MAX_BLOCK_TEXT && is.ready()) {
-            int length = is.read(buf);
+    public void setPriorMap(HashMap<String, Double> priorMap) {
+        this.priorMap = priorMap;
+    }
+    
+    /**
+     * Specify max size of target text to use for language detection.
+     * The default value is 10000(10KB).
+     * @param max_text_length the max_text_length to set
+     */
+    public void setMax_text_length(int max_text_length) {
+        this.max_text_length = max_text_length;
+    }
+
+    
+    /**
+     * Append the target text for language detection.
+     * This method read the text from specified input reader.
+     * If the total size of target text exceeds the limit size specified by {@link Detector#setMax_text_length(int)},
+     * the rest is cut down.
+     * 
+     * @param reader the input reader (BufferedReader as usual)
+     * @throws IOException Can't read the reader.
+     */
+    public void append(Reader reader) throws IOException {
+        char[] buf = new char[max_text_length/2];
+        while (text.length() < max_text_length && reader.ready()) {
+            int length = reader.read(buf);
             append(new String(buf, 0, length));
         }
     }
 
     /**
-     * @param buf
+     * Append the target text for language detection.
+     * If the total size of target text exceeds the limit size specified by {@link Detector#setMax_text_length(int)},
+     * the rest is cut down.
+     * 
+     * @param text the target text to append
      */
-    public void append(String buf) {
-        buf = URL_REGEX.matcher(buf).replaceAll(" ");
-        buf = MAIL_REGEX.matcher(buf).replaceAll(" ");
+    public void append(String text) {
+        text = URL_REGEX.matcher(text).replaceAll(" ");
+        text = MAIL_REGEX.matcher(text).replaceAll(" ");
         char pre = 0;
-        for (int i = 0; i < buf.length() && text.length() < MAX_BLOCK_TEXT; ++i) {
-            char c = NGram.normalize(buf.charAt(i));
-            if (c != ' ' || pre != ' ') text.append(c);
+        for (int i = 0; i < text.length() && text.length() < max_text_length; ++i) {
+            char c = NGram.normalize(text.charAt(i));
+            if (c != ' ' || pre != ' ') this.text.append(c);
             pre = c;
         }
     }
@@ -145,7 +179,7 @@ public class Detector {
     }
 
     /**
-     * 
+     * Detect language of the target text and return the language name which has the highest probability.
      * @return detected language name which has most probability.
      * @throws LangDetectException 
      */
@@ -173,23 +207,17 @@ public class Detector {
      */
     private void detectBlock() throws LangDetectException {
         cleaningText();
-        if (text.length()==0) {
+        if (text.length()==0)
             throw new LangDetectException(ErrorCode.NoTextError, "no text error");
-        }
 
         ArrayList<String> ngrams = extractNGrams();
         
         langprob = new HashMap<String, Double>();
         for (String lang: langlist) langprob.put(lang, 0.0);
 
-        //double alpha = this.alpha - ALPHA_WIDTH;
         Random rand = new Random();
-        for (int t = 0; t < N_TRIALS; ++t) {
-            HashMap<String, Double> prob = new HashMap<String, Double>();
-            for(String lang: langlist) {
-                prob.put(lang, 1.0 / langlist.size());
-            }
-    
+        for (int t = 0; t < n_trial; ++t) {
+            HashMap<String, Double> prob = initProbability();
             double alpha = this.alpha + rand.nextGaussian() * ALPHA_WIDTH;
 
             for (int i = 0;; ++i) {
@@ -200,16 +228,30 @@ public class Detector {
                     if (verbose) System.out.println("> " + sortProbability(prob));
                 }
             }
-            for(String lang: langlist) langprob.put(lang, langprob.get(lang) + prob.get(lang));
+            for(String lang: langlist) langprob.put(lang, langprob.get(lang) + prob.get(lang) / n_trial);
             if (verbose) System.out.println("==> " + sortProbability(prob));
-
-            //alpha += ALPHA_WIDTH * 2 / (N_TRIALS - 1);
         }
-        for(String lang: langlist) langprob.put(lang, langprob.get(lang) / N_TRIALS);
     }
 
     /**
-     * @return
+     * Initialize the map of language probabilities.
+     * If there is the specified prior map, use it as initial map.
+     * @return initialized map of language probabilities
+     */
+    @SuppressWarnings("unchecked")
+    private HashMap<String, Double> initProbability() {
+        if (priorMap != null) return (HashMap<String, Double>) priorMap.clone();
+
+        HashMap<String, Double> prob = new HashMap<String, Double>();
+        for(String lang: langlist) {
+            prob.put(lang, 1.0 / langlist.size());
+        }
+        return prob;
+    }
+
+    /**
+     * Extract n-grams from target text
+     * @return n-grams list
      */
     private ArrayList<String> extractNGrams() {
         ArrayList<String> list = new ArrayList<String>();
@@ -237,11 +279,11 @@ public class Detector {
         for (String lang : langlist) {
             double p = prob.get(lang);
             if (langProbMap.containsKey(lang)) {
-                p *= alpha + langProbMap.get(lang) * BASE;
+                p *= alpha + langProbMap.get(lang) * BASE_FREQ;
             } else {
                 p *= alpha;
             }
-            p /= alpha * wordLangProbMap.size() + BASE;
+            p /= alpha * wordLangProbMap.size() + BASE_FREQ;
             prob.put(lang, p);
         }
         return true;
@@ -301,4 +343,5 @@ public class Detector {
         }
         return list;
     }
+
 }

@@ -146,11 +146,12 @@ public class Command {
     public void detectLang() {
         if (loadProfile()) return;
         for (String filename: arglist) {
-            Detector detector = DetectorFactory.create(getDouble("alpha", DEFAULT_ALPHA));
-            if (hasOpt("--debug")) detector.setVerbose();
             BufferedReader is = null;
             try {
                 is = new BufferedReader(new InputStreamReader(new FileInputStream(filename), "utf-8"));
+
+                Detector detector = DetectorFactory.create(getDouble("alpha", DEFAULT_ALPHA));
+                if (hasOpt("--debug")) detector.setVerbose();
                 detector.append(is);
                 System.out.println(filename + ":" + detector.getProbabilities());
             } catch (IOException e) {

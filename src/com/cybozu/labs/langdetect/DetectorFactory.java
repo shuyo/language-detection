@@ -28,8 +28,8 @@ import com.cybozu.labs.langdetect.util.LangProfile;
  * @author Nakatani Shuyo
  */
 public class DetectorFactory {
-    private HashMap<String, HashMap<String, Double>> wordLangProbMap;
-    private ArrayList<String> langlist;
+    public HashMap<String, HashMap<String, Double>> wordLangProbMap;
+    public ArrayList<String> langlist;
     private DetectorFactory() {
         wordLangProbMap = new HashMap<String, HashMap<String, Double>>();
         langlist = new ArrayList<String>();
@@ -85,9 +85,10 @@ public class DetectorFactory {
      * Construct Detector instance
      * 
      * @return Detector instance
+     * @throws LangDetectException 
      */
-    public static Detector create() {
-        return new Detector(instance_.wordLangProbMap, instance_.langlist);
+    public static Detector create() throws LangDetectException {
+        return createDetector();
     }
 
     /**
@@ -95,10 +96,18 @@ public class DetectorFactory {
      * 
      * @param alpha smoothing parameter (default value = 0.5)
      * @return Detector instance
+     * @throws LangDetectException 
      */
-    public static Detector create(double alpha) {
-        Detector detector = new Detector(instance_.wordLangProbMap, instance_.langlist);
+    public static Detector create(double alpha) throws LangDetectException {
+        Detector detector = createDetector();
         detector.setAlpha(alpha);
+        return detector;
+    }
+
+    private static Detector createDetector() throws LangDetectException {
+        if (instance_.langlist.size()==0)
+            throw new LangDetectException(ErrorCode.NeedLoadProfileError, "need to load profiles");
+        Detector detector = new Detector(instance_);
         return detector;
     }
 }

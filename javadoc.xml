@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="javadoc">
+    <target name="javadoc">
+        <javadoc access="public" locale="en" author="true" classpath="C:\ols\eclipse\plugins\org.junit_4.8.1.v4_8_1_v20100427-1100\junit.jar;C:\ols\eclipse\plugins\org.hamcrest.core_1.1.0.v20090501071000.jar;../libs/jsonic-1.2.0/jsonic-1.2.0.jar" destdir="doc" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="com.cybozu.labs.langdetect.util,com.cybozu.labs.langdetect" source="1.6" sourcepath="src" splitindex="true" use="true" version="true" overview="src/overview.html"/>
+    </target>
+</project>
