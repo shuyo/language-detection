@@ -47,13 +47,13 @@ public class NGram {
 
     /**
      * Get n-Gram
-     * @param n
+     * @param n length of n-gram
      * @return n-Gram String (null if it is invalid)
      */
     public String get(int n) {
         if (capitalword_) return null;
         int len = grams_.length(); 
-        if (len < n) return null;
+        if (n < 1 || n > 3 || len < n) return null;
         if (n == 1) {
             char ch = grams_.charAt(len - 1);
             if (ch == ' ') return null;
