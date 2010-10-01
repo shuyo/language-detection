@@ -37,9 +37,12 @@ public class DetectorFactory {
     static private DetectorFactory instance_ = new DetectorFactory();
 
     /**
-     * 
+     * Load profiles from specified directory.
+     * This method must be called once before language detection.
+     *  
      * @param profileDirectory profile directory path
-     * @throws LangDetectException 
+     * @throws LangDetectException  Can't open profiles(error code = {@link ErrorCode#FileLoadError})
+     *                              or profile's format is wrong (error code = {@link ErrorCode#FormatError})
      */
     public static void loadProfile(String profileDirectory) throws LangDetectException {
         File dir = new File(profileDirectory);
@@ -66,7 +69,7 @@ public class DetectorFactory {
      * @param profile
      * @throws LangDetectException 
      */
-    static public void addProfile(LangProfile profile) throws LangDetectException {
+    static private void addProfile(LangProfile profile) throws LangDetectException {
         String lang = profile.name;
         if (instance_.langlist.contains(lang)) {
             throw new LangDetectException(ErrorCode.DuplicateLangError, "duplicate the same language profile");
@@ -87,7 +90,7 @@ public class DetectorFactory {
      * @return Detector instance
      * @throws LangDetectException 
      */
-    public static Detector create() throws LangDetectException {
+    static public Detector create() throws LangDetectException {
         return createDetector();
     }
 
@@ -104,7 +107,7 @@ public class DetectorFactory {
         return detector;
     }
 
-    private static Detector createDetector() throws LangDetectException {
+    static private Detector createDetector() throws LangDetectException {
         if (instance_.langlist.size()==0)
             throw new LangDetectException(ErrorCode.NeedLoadProfileError, "need to load profiles");
         Detector detector = new Detector(instance_);

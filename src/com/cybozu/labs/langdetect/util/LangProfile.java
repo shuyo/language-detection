@@ -5,17 +5,17 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Language Profile Class for Profile Generator
- *
- * This class is not used when language detection.
+ * {@link LangProfile} is a Language Profile Class.
+ * Users don't use this class directly.
+ * 
  * @author Nakatani Shuyo
  */
 public class LangProfile {
-    private static final int MINIMUM_FREQ = 3;
-    private static final int LESS_FREQ_RATIO = 10000;
-    public String name;
-    public HashMap<String, Integer> freq;
-    public int[] n_words;
+    private static final int MINIMUM_FREQ = 2;
+    private static final int LESS_FREQ_RATIO = 100000;
+    public String name = null;
+    public HashMap<String, Integer> freq = new HashMap<String, Integer>();
+    public int[] n_words = new int[NGram.N_GRAM];
 
     /**
      * Constructor for JSONIC 
@@ -27,22 +27,23 @@ public class LangProfile {
      * @param name language name
      * @param n_gram maximum length of n-gram
      */
-    public LangProfile(String name, int n_gram) {
+    public LangProfile(String name) {
         this.name = name;
-        n_words = new int[n_gram];
-        freq = new HashMap<String, Integer>();
     }
     
     /**
-     * @param word
+     * Add n-gram to profile
+     * @param gram
      */
-    public void add(String word) {
-        if (word == null) return;
-        ++n_words[word.length() - 1];
-        if (freq.containsKey(word)) {
-            freq.put(word, freq.get(word) + 1);
+    public void add(String gram) {
+        if (name == null || gram == null) return;   // Illegal
+        int len = gram.length();
+        if (len < 1 || len > NGram.N_GRAM) return;  // Illegal
+        ++n_words[len - 1];
+        if (freq.containsKey(gram)) {
+            freq.put(gram, freq.get(gram) + 1);
         } else {
-            freq.put(word, 1);
+            freq.put(gram, 1);
         }
     }
 
@@ -50,6 +51,7 @@ public class LangProfile {
      * Eliminate below less frequency n-grams and noise Latin alphabets
      */
     public void omitLessFreq() {
+        if (name == null) return;   // Illegal
         int threshold = n_words[0] / LESS_FREQ_RATIO;
         if (threshold < MINIMUM_FREQ) threshold = MINIMUM_FREQ;
         

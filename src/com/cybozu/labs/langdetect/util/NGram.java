@@ -4,8 +4,9 @@ import java.lang.Character.UnicodeBlock;
 import java.util.HashMap;
 
 /**
+ * 
+ * Users don't use this class directly.
  * @author Nakatani Shuyo
- *
  */
 public class NGram {
     private static final String LATIN1_EXCLUDED = Messages.getString("NGram.LATIN1_EXCLUDE");

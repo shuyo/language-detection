@@ -32,7 +32,7 @@ public class GenProfile {
      */
     public static LangProfile load(String lang, File file) {
 
-        LangProfile profile = new LangProfile(lang, NGram.N_GRAM);
+        LangProfile profile = new LangProfile(lang);
 
         InputStream is = null;
         try {
