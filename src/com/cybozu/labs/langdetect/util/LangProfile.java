@@ -25,7 +25,6 @@ public class LangProfile {
     /**
      * Normal Constructor
      * @param name language name
-     * @param n_gram maximum length of n-gram
      */
     public LangProfile(String name) {
         this.name = name;

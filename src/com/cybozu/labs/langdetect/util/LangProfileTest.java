@@ -55,7 +55,7 @@ public class LangProfileTest {
     }
 
     /**
-     * Test method for {@link com.cybozu.labs.langdetect.util.LangProfile#LangProfile(java.lang.String, int)}.
+     * Test method for {@link com.cybozu.labs.langdetect.util.LangProfile#LangProfile(java.lang.String)}.
      */
     @Test
     public final void testLangProfileStringInt() {

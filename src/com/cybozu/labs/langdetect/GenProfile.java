@@ -1,7 +1,7 @@
 package com.cybozu.labs.langdetect;
 
-import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +12,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import com.cybozu.labs.langdetect.util.LangProfile;
-import com.cybozu.labs.langdetect.util.NGram;
 import com.cybozu.labs.langdetect.util.TagExtractor;
 
 /**
