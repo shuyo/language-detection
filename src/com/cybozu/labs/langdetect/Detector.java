@@ -182,6 +182,7 @@ public class Detector {
      * Detect language of the target text and return the language name which has the highest probability.
      * @return detected language name which has most probability.
      * @throws LangDetectException 
+     *  code = ErrorCode.CantDetectError : Can't detect because of no valid features in text
      */
     public String detect() throws LangDetectException {
         ArrayList<Language> probabilities = getProbabilities();
@@ -193,6 +194,7 @@ public class Detector {
      * Get language candidates which have high probabilities
      * @return possible languages list (whose probabilities are over PROB_THRESHOLD, ordered by probabilities descendently
      * @throws LangDetectException 
+     *  code = ErrorCode.CantDetectError : Can't detect because of no valid features in text
      */
     public ArrayList<Language> getProbabilities() throws LangDetectException {
         if (langprob == null) detectBlock();
@@ -207,10 +209,9 @@ public class Detector {
      */
     private void detectBlock() throws LangDetectException {
         cleaningText();
-        if (text.length()==0)
-            throw new LangDetectException(ErrorCode.NoTextError, "no text error");
-
         ArrayList<String> ngrams = extractNGrams();
+        if (ngrams.size()==0)
+            throw new LangDetectException(ErrorCode.CantDetectError, "no features in text");
         
         langprob = new HashMap<String, Double>();
         for (String lang: langlist) langprob.put(lang, 0.0);

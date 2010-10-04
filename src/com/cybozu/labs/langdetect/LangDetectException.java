@@ -4,7 +4,7 @@ package com.cybozu.labs.langdetect;
  * @author Nakatani Shuyo
  */
 enum ErrorCode {
-    NoTextError, FormatError, FileLoadError, DuplicateLangError, NeedLoadProfileError
+    NoTextError, FormatError, FileLoadError, DuplicateLangError, NeedLoadProfileError, CantDetectError
 }
 
 /**
