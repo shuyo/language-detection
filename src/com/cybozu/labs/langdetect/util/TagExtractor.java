@@ -6,10 +6,10 @@ package com.cybozu.labs.langdetect.util;
  * @author Nakatani Shuyo
  */
 public class TagExtractor {
-    private String target_;
-    private int threshold_;
-    private StringBuffer buf_;
-    private String tag_;
+    /* package scope */ String target_;
+    /* package scope */ int threshold_;
+    /* package scope */ StringBuffer buf_;
+    /* package scope */ String tag_;
     private int count_;
 
     public TagExtractor(String tag, int threshold) {
@@ -29,12 +29,12 @@ public class TagExtractor {
         tag_ = tag;
     }
     public void add(String line) {
-        if (tag_ == target_) {
+        if (tag_ == target_ && line != null) {
             buf_.append(line);
         }
     }
     public void closeTag(LangProfile profile) {
-        if (tag_ == target_ && buf_.length() > threshold_) {
+        if (profile != null && tag_ == target_ && buf_.length() > threshold_) {
             NGram gram = new NGram();
             for(int i=0; i<buf_.length(); ++i) {
                 gram.addChar(buf_.charAt(i));
