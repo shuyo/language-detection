@@ -291,7 +291,7 @@ public class Detector {
     }
 
     /**
-     * unicode encoding (for debug dump)
+     * unicode encoding (for verbose mode)
      * @param word
      * @return
      */

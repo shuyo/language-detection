@@ -119,17 +119,20 @@ public class Command {
                 System.err.println("Not Found abstract xml : lang = " + lang);
                 continue;
             }
-            LangProfile profile = GenProfile.load(lang, file);
-            profile.omitLessFreq();
 
-            File profile_path = new File(get("directory") + "/profiles/" + lang);
             FileOutputStream os = null;
             try {
+                LangProfile profile = GenProfile.load(lang, file);
+                profile.omitLessFreq();
+
+                File profile_path = new File(get("directory") + "/profiles/" + lang);
                 os = new FileOutputStream(profile_path);
                 JSON.encode(profile, os);
             } catch (JSONException e) {
                 e.printStackTrace();
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (LangDetectException e) {
                 e.printStackTrace();
             } finally {
                 try {
@@ -159,10 +162,8 @@ public class Command {
                 detector.append(is);
                 System.out.println(filename + ":" + detector.getProbabilities());
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } catch (LangDetectException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } finally {
                 try {
@@ -215,10 +216,8 @@ public class Command {
                 }
                 
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } catch (LangDetectException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } finally {
                 try {

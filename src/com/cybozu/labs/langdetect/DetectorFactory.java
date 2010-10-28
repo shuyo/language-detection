@@ -69,7 +69,7 @@ public class DetectorFactory {
      * @param profile
      * @throws LangDetectException 
      */
-    static private void addProfile(LangProfile profile) throws LangDetectException {
+    static /* package scope */ void addProfile(LangProfile profile) throws LangDetectException {
         String lang = profile.name;
         if (instance_.langlist.contains(lang)) {
             throw new LangDetectException(ErrorCode.DuplicateLangError, "duplicate the same language profile");
@@ -82,6 +82,14 @@ public class DetectorFactory {
             double prob = profile.freq.get(word).doubleValue() / profile.n_words[word.length()-1];
             instance_.wordLangProbMap.get(word).put(lang, prob);
         }
+    }
+
+    /**
+     * for only Unit Test
+     */
+    static /* package scope */ void clear() {
+        instance_.langlist.clear();
+        instance_.wordLangProbMap.clear();
     }
 
     /**
