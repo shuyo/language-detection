@@ -20,7 +20,7 @@ import com.cybozu.labs.langdetect.util.NGram;
  * {@link #getProbabilities()} methods returns a list of multiple languages and their probabilities.
  * <p>  
  * The detector has some parameters for language detection.
- * See {@link #setAlpha(double)}, {@link #setMax_text_length(int)} and {@link #setPriorMap(HashMap)}.
+ * See {@link #setAlpha(double)}, {@link #setMaxTextLength(int)} and {@link #setPriorMap(HashMap)}.
  * 
  * <pre>
  * import java.util.ArrayList;
@@ -113,7 +113,7 @@ public class Detector {
      * The default value is 10000(10KB).
      * @param max_text_length the max_text_length to set
      */
-    public void setMax_text_length(int max_text_length) {
+    public void setMaxTextLength(int max_text_length) {
         this.max_text_length = max_text_length;
     }
 
@@ -121,7 +121,7 @@ public class Detector {
     /**
      * Append the target text for language detection.
      * This method read the text from specified input reader.
-     * If the total size of target text exceeds the limit size specified by {@link Detector#setMax_text_length(int)},
+     * If the total size of target text exceeds the limit size specified by {@link Detector#setMaxTextLength(int)},
      * the rest is cut down.
      * 
      * @param reader the input reader (BufferedReader as usual)
@@ -137,7 +137,7 @@ public class Detector {
 
     /**
      * Append the target text for language detection.
-     * If the total size of target text exceeds the limit size specified by {@link Detector#setMax_text_length(int)},
+     * If the total size of target text exceeds the limit size specified by {@link Detector#setMaxTextLength(int)},
      * the rest is cut down.
      * 
      * @param text the target text to append

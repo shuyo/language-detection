@@ -16,7 +16,8 @@ import com.cybozu.labs.langdetect.util.LangProfile;
 public class DetectorTest {
 
     private static final String TRAINING_EN = "a a a b b c c d e";
-    private static final String TRAINING_JA = "a b b c c c d d d";
+    private static final String TRAINING_FR = "a b b c c c d d d";
+    private static final String TRAINING_JA = "\u3042 \u3042 \u3042 \u3044 \u3046 \u3048 \u3048";
 
     @Before
     public void setUp() throws Exception {
@@ -26,6 +27,11 @@ public class DetectorTest {
         for (String w : TRAINING_EN.split(" "))
             profile_en.add(w);
         DetectorFactory.addProfile(profile_en);
+
+        LangProfile profile_fr = new LangProfile("fr");
+        for (String w : TRAINING_FR.split(" "))
+            profile_fr.add(w);
+        DetectorFactory.addProfile(profile_fr);
 
         LangProfile profile_ja = new LangProfile("ja");
         for (String w : TRAINING_JA.split(" "))
@@ -48,7 +54,7 @@ public class DetectorTest {
     public final void testDetector2() throws LangDetectException {
         Detector detect = DetectorFactory.create();
         detect.append("b d");
-        assertEquals(detect.detect(), "ja");
+        assertEquals(detect.detect(), "fr");
     }
 
     @Test
@@ -58,4 +64,10 @@ public class DetectorTest {
         assertEquals(detect.detect(), "en");
     }
 
+    @Test
+    public final void testDetector4() throws LangDetectException {
+        Detector detect = DetectorFactory.create();
+        detect.append("\u3042\u3042\u3042\u3042a");
+        assertEquals(detect.detect(), "ja");
+    }
 }
