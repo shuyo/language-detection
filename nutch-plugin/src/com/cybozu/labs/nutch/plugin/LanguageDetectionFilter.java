@@ -15,16 +15,33 @@ import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 
+/**
+ * 
+ * Language Detection Extension for Apache Nutch
+ *   using Language Detection Library ( http://code.google.com/p/language-detection/ ).
+ * 
+ * For HTMLLanguageParser and LanguageQueryFilter, 
+ * the extensions of the Nutch's standard language-identifier plugin can be used without modifications, 
+ * so it is provides an extension of LanguageIdentifier only.
+ * 
+ * @author Nakatani Shuyo
+ *
+ */
 public class LanguageDetectionFilter implements IndexingFilter {
+	private static final int TEXTSIZE_UPPER_LIMIT_DEFAULT = 10000;
 	private Configuration conf = null;
 	private LangDetectException cause = null;
+	private int textsize_upper_limit;
 
+	/**
+	 * Constructor with no parameters (for generation by reflection)
+	 */
 	public LanguageDetectionFilter() {
-		System.err.println("LanguageDetectionFilter");
-		Throwable t = new Throwable();
-		t.printStackTrace(System.err);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public NutchDocument filter(NutchDocument doc, Parse parse, Text url,
 			CrawlDatum datum, Inlinks inlinks) throws IndexingException {
 		if (conf == null) {
@@ -41,6 +58,7 @@ public class LanguageDetectionFilter implements IndexingFilter {
 					.append(parse.getText());
 			try {
 				Detector detector = DetectorFactory.create();
+				detector.setMaxTextLength(textsize_upper_limit);
 				detector.append(text.toString());
 				lang = detector.detect();
 			} catch (LangDetectException e) {
@@ -53,24 +71,33 @@ public class LanguageDetectionFilter implements IndexingFilter {
 		return doc;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public void addIndexBackendOptions(Configuration conf) {
 		LuceneWriter.addFieldOptions("lang", LuceneWriter.STORE.YES,
 				LuceneWriter.INDEX.UNTOKENIZED, conf);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public void setConf(Configuration conf) {
-		System.err.println("LanguageDetectionFilter#setConf");
-		Throwable t = new Throwable();
-		t.printStackTrace(System.err);
-		this.conf = conf;
-		try {
-			DetectorFactory.loadProfile(conf.get("langdetect.profile.dir"));
-		} catch (LangDetectException e) {
-			// throw when filter() is called
-			cause = e;
+		if (this.conf == null) {
+			try {
+				DetectorFactory.loadProfile(conf.get("langdetect.profile.dir"));
+				textsize_upper_limit = conf.getInt("langdetect.textsize", TEXTSIZE_UPPER_LIMIT_DEFAULT);
+			} catch (LangDetectException e) {
+				// afterward throw when filter() is called
+				cause = e;
+			}
 		}
+		this.conf = conf;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public Configuration getConf() {
 		return this.conf;
 	}
