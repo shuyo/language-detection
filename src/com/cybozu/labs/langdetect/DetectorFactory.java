@@ -18,20 +18,24 @@ import com.cybozu.labs.langdetect.util.LangProfile;
  * 
  * Before using language detection library, 
  * load profiles with {@link DetectorFactory#loadProfile(String)} method
- * and set initialization parameters (TODO)
+ * and set initialization parameters.
  * 
  * When the language detection,
  * construct Detector instance via {@link DetectorFactory#create()}.
  * See also {@link Detector}'s sample code.
  * 
+ * <ul>
+ * <li>4x faster improvement based on Elmer Garduno's code. Thanks!</li>
+ * </ul>
+ * 
  * @see Detector
  * @author Nakatani Shuyo
  */
 public class DetectorFactory {
-    public HashMap<String, HashMap<String, Double>> wordLangProbMap;
+    public HashMap<String, double[]> wordLangProbMap;
     public ArrayList<String> langlist;
     private DetectorFactory() {
-        wordLangProbMap = new HashMap<String, HashMap<String, Double>>();
+        wordLangProbMap = new HashMap<String, double[]>();
         langlist = new ArrayList<String>();
     }
     static private DetectorFactory instance_ = new DetectorFactory();
@@ -46,13 +50,16 @@ public class DetectorFactory {
      */
     public static void loadProfile(String profileDirectory) throws LangDetectException {
         File dir = new File(profileDirectory);
-        for (File file: dir.listFiles()) {
+        File[] listFiles = dir.listFiles();
+        int langsize = listFiles.length, index = 0;
+        for (File file: listFiles) {
             if (file.getName().startsWith(".") || !file.isFile()) continue;
             FileInputStream is = null;
             try {
                 is = new FileInputStream(file);
                 LangProfile profile = JSON.decode(is, LangProfile.class);
-                addProfile(profile);
+                addProfile(profile, index, langsize);
+                ++index;
             } catch (JSONException e) {
                 throw new LangDetectException(ErrorCode.FormatError, "profile format error in '" + file.getName() + "'");
             } catch (IOException e) {
@@ -67,9 +74,11 @@ public class DetectorFactory {
 
     /**
      * @param profile
+     * @param langsize 
+     * @param index 
      * @throws LangDetectException 
      */
-    static /* package scope */ void addProfile(LangProfile profile) throws LangDetectException {
+    static /* package scope */ void addProfile(LangProfile profile, int index, int langsize) throws LangDetectException {
         String lang = profile.name;
         if (instance_.langlist.contains(lang)) {
             throw new LangDetectException(ErrorCode.DuplicateLangError, "duplicate the same language profile");
@@ -77,10 +86,10 @@ public class DetectorFactory {
         instance_.langlist.add(lang);
         for (String word: profile.freq.keySet()) {
             if (!instance_.wordLangProbMap.containsKey(word)) {
-                instance_.wordLangProbMap.put(word, new HashMap<String, Double>());
+                instance_.wordLangProbMap.put(word, new double[langsize]);
             }
             double prob = profile.freq.get(word).doubleValue() / profile.n_words[word.length()-1];
-            instance_.wordLangProbMap.get(word).put(lang, prob);
+            instance_.wordLangProbMap.get(word)[index] = prob;
         }
     }
 

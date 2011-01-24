@@ -45,6 +45,10 @@ import com.cybozu.labs.langdetect.util.NGram;
  * }
  * </pre>
  * 
+ * <ul>
+ * <li>4x faster improvement based on Elmer Garduno's code. Thanks!</li>
+ * </ul>
+ * 
  * @author Nakatani Shuyo
  * @see DetectorFactory
  */
@@ -61,16 +65,16 @@ public class Detector {
     private static final Pattern URL_REGEX = Pattern.compile("https?://[-_.?&~;+=/#0-9A-Za-z]+");
     private static final Pattern MAIL_REGEX = Pattern.compile("[-_.0-9A-Za-z]+@[-_0-9A-Za-z]+[-_.0-9A-Za-z]+");
     
-    private final HashMap<String, HashMap<String, Double>> wordLangProbMap;
+    private final HashMap<String, double[]> wordLangProbMap;
     private final ArrayList<String> langlist;
 
     private StringBuffer text;
-    private HashMap<String, Double> langprob = null;
+    private double[] langprob = null;
 
     private double alpha = ALPHA_DEFAULT;
     private int n_trial = 7;
     private int max_text_length = 10000;
-    private HashMap<String, Double> priorMap = null;
+    private double[] priorMap = null;
     private boolean verbose = false;
 
     /**
@@ -81,14 +85,14 @@ public class Detector {
     public Detector(DetectorFactory factory) {
         this.wordLangProbMap = factory.wordLangProbMap;
         this.langlist = factory.langlist;
-        text = new StringBuffer();
+        this.text = new StringBuffer();
     }
 
     /**
      * Set Verbose Mode(use for debug).
      */
     public void setVerbose() {
-        verbose = true;
+        this.verbose = true;
     }
 
     /**
@@ -103,9 +107,22 @@ public class Detector {
     /**
      * Set prior information about language probabilities.
      * @param priorMap the priorMap to set
+     * @throws LangDetectException 
      */
-    public void setPriorMap(HashMap<String, Double> priorMap) {
-        this.priorMap = priorMap;
+    public void setPriorMap(HashMap<String, Double> priorMap) throws LangDetectException {
+        this.priorMap = new double[langlist.size()];
+        double sump = 0;
+        for (int i=0;i<this.priorMap.length;++i) {
+            String lang = langlist.get(i);
+            if (priorMap.containsKey(lang)) {
+                double p = priorMap.get(lang);
+                if (p<0) throw new LangDetectException(ErrorCode.InitParamError, "Prior probability must be non-negative.");
+                this.priorMap[i] = p;
+                sump += p;
+            }
+        }
+        if (sump<=0) throw new LangDetectException(ErrorCode.InitParamError, "More one of prior probability must be non-zero.");
+        for (int i=0;i<this.priorMap.length;++i) this.priorMap[i] /= sump;
     }
     
     /**
@@ -213,12 +230,11 @@ public class Detector {
         if (ngrams.size()==0)
             throw new LangDetectException(ErrorCode.CantDetectError, "no features in text");
         
-        langprob = new HashMap<String, Double>();
-        for (String lang: langlist) langprob.put(lang, 0.0);
+        langprob = new double[langlist.size()];
 
         Random rand = new Random();
         for (int t = 0; t < n_trial; ++t) {
-            HashMap<String, Double> prob = initProbability();
+            double[] prob = initProbability();
             double alpha = this.alpha + rand.nextGaussian() * ALPHA_WIDTH;
 
             for (int i = 0;; ++i) {
@@ -229,7 +245,7 @@ public class Detector {
                     if (verbose) System.out.println("> " + sortProbability(prob));
                 }
             }
-            for(String lang: langlist) langprob.put(lang, langprob.get(lang) + prob.get(lang) / n_trial);
+            for(int j=0;j<langprob.length;++j) langprob[j] += prob[j] / n_trial;
             if (verbose) System.out.println("==> " + sortProbability(prob));
         }
     }
@@ -239,13 +255,12 @@ public class Detector {
      * If there is the specified prior map, use it as initial map.
      * @return initialized map of language probabilities
      */
-    @SuppressWarnings("unchecked")
-    private HashMap<String, Double> initProbability() {
-        if (priorMap != null) return (HashMap<String, Double>) priorMap.clone();
-
-        HashMap<String, Double> prob = new HashMap<String, Double>();
-        for(String lang: langlist) {
-            prob.put(lang, 1.0 / langlist.size());
+    private double[] initProbability() {
+        double[] prob = new double[langlist.size()];
+        if (priorMap != null) {
+            for(int i=0;i<prob.length;++i) prob[i] = priorMap[i];
+        } else {
+            for(int i=0;i<prob.length;++i) prob[i] = 1.0 / langlist.size();
         }
         return prob;
     }
@@ -271,23 +286,52 @@ public class Detector {
      * update language probabilities with N-gram string(N=1,2,3)
      * @param word N-gram string
      */
-    private boolean updateLangProb(HashMap<String, Double> prob, String word, double alpha) {
+    private boolean updateLangProb(double[] prob, String word, double alpha) {
         if (word == null || !wordLangProbMap.containsKey(word)) return false;
 
-        HashMap<String, Double> langProbMap = wordLangProbMap.get(word);
+        double[] langProbMap = wordLangProbMap.get(word);
         if (verbose) System.out.println(word + "(" + unicodeEncode(word) + "):" + langProbMap.toString());
 
-        for (String lang : langlist) {
-            double p = prob.get(lang);
-            if (langProbMap.containsKey(lang)) {
-                p *= alpha + langProbMap.get(lang) * BASE_FREQ;
-            } else {
-                p *= alpha;
-            }
-            p /= alpha * wordLangProbMap.size() + BASE_FREQ;
-            prob.put(lang, p);
+        double weight = alpha / BASE_FREQ;
+        for (int i=0;i<prob.length;++i) {
+            prob[i] *= weight + langProbMap[i];
         }
         return true;
+    }
+
+    /**
+     * normalize probabilities and check convergence by the maximun probability
+     * @return maximum of probabilities
+     */
+    static private double normalizeProb(double[] prob) {
+        double maxp = 0, sump = 0;
+        for(int i=0;i<prob.length;++i) sump += prob[i];
+        for(int i=0;i<prob.length;++i) {
+            double p = prob[i] / sump;
+            if (maxp < p) maxp = p;
+            prob[i] = p;
+        }
+        return maxp;
+    }
+
+    /**
+     * @param probabilities HashMap
+     * @return lanugage candidates order by probabilities descendently
+     */
+    private ArrayList<Language> sortProbability(double[] prob) {
+        ArrayList<Language> list = new ArrayList<Language>();
+        for(int j=0;j<prob.length;++j) {
+            double p = prob[j];
+            if (p > PROB_THRESHOLD) {
+                for (int i = 0; i <= list.size(); ++i) {
+                    if (i == list.size() || list.get(i).prob < p) {
+                        list.add(i, new Language(langlist.get(j), p));
+                        break;
+                    }
+                }
+            }
+        }
+        return list;
     }
 
     /**
@@ -308,41 +352,6 @@ public class Detector {
             }
         }
         return buf.toString();
-    }
-
-    /**
-     * normalize probabilities and check convergence by the maximun probability
-     * @return maximum of probabilities
-     */
-    static private double normalizeProb(HashMap<String, Double> prob) {
-        double maxp = 0, sump = 0;
-        for(String lang: prob.keySet()) sump += prob.get(lang);
-        for(String lang: prob.keySet()) {
-            double p = prob.get(lang) / sump;
-            if (maxp < p) maxp = p;
-            prob.put(lang, p);
-        }
-        return maxp;
-    }
-
-    /**
-     * @param probabilities HashMap
-     * @return lanugage candidates order by probabilities descendently
-     */
-    static private ArrayList<Language> sortProbability(HashMap<String, Double> prob) {
-        ArrayList<Language> list = new ArrayList<Language>();
-        for(String lang: prob.keySet()) {
-            double p = prob.get(lang);
-            if (p > PROB_THRESHOLD) {
-                for (int i = 0; i <= list.size(); ++i) {
-                    if (i == list.size() || list.get(i).prob < p) {
-                        list.add(i, new Language(lang, p));
-                        break;
-                    }
-                }
-            }
-        }
-        return list;
     }
 
 }
