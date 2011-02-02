@@ -51,6 +51,9 @@ public class DetectorFactory {
     public static void loadProfile(String profileDirectory) throws LangDetectException {
         File dir = new File(profileDirectory);
         File[] listFiles = dir.listFiles();
+        if (listFiles == null)
+            throw new LangDetectException(ErrorCode.NeedLoadProfileError, "Not found profile directory: " + profileDirectory);
+            
         int langsize = listFiles.length, index = 0;
         for (File file: listFiles) {
             if (file.getName().startsWith(".") || !file.isFile()) continue;

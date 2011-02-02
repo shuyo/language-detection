@@ -163,7 +163,7 @@ public class Detector {
         text = URL_REGEX.matcher(text).replaceAll(" ");
         text = MAIL_REGEX.matcher(text).replaceAll(" ");
         char pre = 0;
-        for (int i = 0; i < text.length() && text.length() < max_text_length; ++i) {
+        for (int i = 0; i < text.length() && i < max_text_length; ++i) {
             char c = NGram.normalize(text.charAt(i));
             if (c != ' ' || pre != ' ') this.text.append(c);
             pre = c;
