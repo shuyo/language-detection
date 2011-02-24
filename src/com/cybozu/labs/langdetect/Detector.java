@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.Character.UnicodeBlock;
 import java.util.ArrayList;
+import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.regex.Pattern;
@@ -290,7 +291,7 @@ public class Detector {
         if (word == null || !wordLangProbMap.containsKey(word)) return false;
 
         double[] langProbMap = wordLangProbMap.get(word);
-        if (verbose) System.out.println(word + "(" + unicodeEncode(word) + "):" + langProbMap.toString());
+        if (verbose) System.out.println(word + "(" + unicodeEncode(word) + "):" + wordProbToString(langProbMap));
 
         double weight = alpha / BASE_FREQ;
         for (int i=0;i<prob.length;++i) {
@@ -299,6 +300,17 @@ public class Detector {
         return true;
     }
 
+    private String wordProbToString(double[] prob) {
+        Formatter formatter = new Formatter();
+        for(int j=0;j<prob.length;++j) {
+            double p = prob[j];
+            if (p>=0.00001) {
+                formatter.format(" %s:%.5f", langlist.get(j), p);
+            }
+        }
+        return formatter.toString();
+    }
+    
     /**
      * normalize probabilities and check convergence by the maximun probability
      * @return maximum of probabilities

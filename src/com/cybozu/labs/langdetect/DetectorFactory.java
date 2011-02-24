@@ -49,10 +49,21 @@ public class DetectorFactory {
      *                              or profile's format is wrong (error code = {@link ErrorCode#FormatError})
      */
     public static void loadProfile(String profileDirectory) throws LangDetectException {
-        File dir = new File(profileDirectory);
-        File[] listFiles = dir.listFiles();
+        loadProfile(new File(profileDirectory));
+    }
+
+    /**
+     * Load profiles from specified directory.
+     * This method must be called once before language detection.
+     *  
+     * @param profileDirectory profile directory path
+     * @throws LangDetectException  Can't open profiles(error code = {@link ErrorCode#FileLoadError})
+     *                              or profile's format is wrong (error code = {@link ErrorCode#FormatError})
+     */
+    public static void loadProfile(File profileDirectory) throws LangDetectException {
+        File[] listFiles = profileDirectory.listFiles();
         if (listFiles == null)
-            throw new LangDetectException(ErrorCode.NeedLoadProfileError, "Not found profile directory: " + profileDirectory);
+            throw new LangDetectException(ErrorCode.NeedLoadProfileError, "Not found profile: " + profileDirectory);
             
         int langsize = listFiles.length, index = 0;
         for (File file: listFiles) {
