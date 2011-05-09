@@ -77,6 +77,7 @@ public class Detector {
     private int max_text_length = 10000;
     private double[] priorMap = null;
     private boolean verbose = false;
+    private Long seed = null;
 
     /**
      * Constructor.
@@ -87,6 +88,7 @@ public class Detector {
         this.wordLangProbMap = factory.wordLangProbMap;
         this.langlist = factory.langlist;
         this.text = new StringBuffer();
+        this.seed  = factory.seed;
     }
 
     /**
@@ -234,6 +236,7 @@ public class Detector {
         langprob = new double[langlist.size()];
 
         Random rand = new Random();
+        if (seed != null) rand.setSeed(seed);
         for (int t = 0; t < n_trial; ++t) {
             double[] prob = initProbability();
             double alpha = this.alpha + rand.nextGaussian() * ALPHA_WIDTH;

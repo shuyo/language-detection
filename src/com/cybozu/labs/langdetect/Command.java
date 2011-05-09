@@ -61,6 +61,15 @@ public class Command {
     private String get(String key) {
         return values.get(key);
     }
+    private Long getLong(String key) {
+        String value = values.get(key);
+        if (value == null) return null;
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
     private double getDouble(String key, double defaultValue) {
         try {
             return Double.valueOf(values.get(key));
@@ -96,6 +105,8 @@ public class Command {
         String profileDirectory = get("directory") + "/"; 
         try {
             DetectorFactory.loadProfile(profileDirectory);
+            Long seed = getLong("seed");
+            if (seed != null) DetectorFactory.setSeed(seed);
             return false;
         } catch (LangDetectException e) {
             System.err.println("ERROR: " + e.getMessage());
@@ -146,7 +157,7 @@ public class Command {
      * Language detection test for each file (--detectlang option)
      * 
      * <pre>
-     * usage: --detectlang -d [profile directory] -a [alpha] [test file(s)]
+     * usage: --detectlang -d [profile directory] -a [alpha] -s [seed] [test file(s)]
      * </pre>
      * 
      */
@@ -178,7 +189,7 @@ public class Command {
      * Batch Test of Language Detection (--batchtest option)
      * 
      * <pre>
-     * usage: --batchtest -d [profile directory] -a [alpha] [test data(s)]
+     * usage: --batchtest -d [profile directory] -a [alpha] -s [seed] [test data(s)]
      * </pre>
      * 
      * The format of test data(s):
@@ -261,6 +272,7 @@ public class Command {
         Command command = new Command();
         command.addOpt("-d", "directory", "./");
         command.addOpt("-a", "alpha", "" + DEFAULT_ALPHA);
+        command.addOpt("-s", "seed", null);
         command.parse(args);
 
         if (command.hasOpt("--genprofile")) {

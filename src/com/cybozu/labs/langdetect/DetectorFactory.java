@@ -34,6 +34,7 @@ import com.cybozu.labs.langdetect.util.LangProfile;
 public class DetectorFactory {
     public HashMap<String, double[]> wordLangProbMap;
     public ArrayList<String> langlist;
+    public Long seed = null;
     private DetectorFactory() {
         wordLangProbMap = new HashMap<String, double[]>();
         langlist = new ArrayList<String>();
@@ -143,5 +144,9 @@ public class DetectorFactory {
             throw new LangDetectException(ErrorCode.NeedLoadProfileError, "need to load profiles");
         Detector detector = new Detector(instance_);
         return detector;
+    }
+    
+    public static void setSeed(long seed) {
+        instance_.seed = seed;
     }
 }
