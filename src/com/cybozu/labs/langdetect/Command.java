@@ -133,7 +133,7 @@ public class Command {
 
             FileOutputStream os = null;
             try {
-                LangProfile profile = GenProfile.load(lang, file);
+                LangProfile profile = GenProfile.loadFromWikipediaAbstract(lang, file);
                 profile.omitLessFreq();
 
                 File profile_path = new File(get("directory") + "/profiles/" + lang);
@@ -151,6 +151,52 @@ public class Command {
                 } catch (IOException e) {}
             }
         }        
+    }
+
+    /**
+     * Generate Language Profile from Text File
+     * 
+     * <pre>
+     * usage: --genprofile-text -l [language code] [text file path]
+     * </pre>
+     * 
+     */
+    private void generateProfileFromText() {
+        if (arglist.size() != 1) {
+            System.err.println("Need to specify text file path");
+            return;
+        }
+        File file = new File(arglist.get(0));
+        if (!file.exists()) {
+            System.err.println("Need to specify existing text file path");
+            return;
+        }
+
+        String lang = get("lang");
+        if (lang == null) {
+            System.err.println("Need to specify langage code(-l)");
+            return;
+        }
+
+        FileOutputStream os = null;
+        try {
+            LangProfile profile = GenProfile.loadFromText(lang, file);
+            profile.omitLessFreq();
+
+            File profile_path = new File(lang);
+            os = new FileOutputStream(profile_path);
+            JSON.encode(profile, os);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (LangDetectException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (os!=null) os.close();
+            } catch (IOException e) {}
+        }
     }
 
     /**
@@ -214,13 +260,12 @@ public class Command {
                     
                     Detector detector = DetectorFactory.create(getDouble("alpha", DEFAULT_ALPHA));
                     detector.append(text);
-/*
-                    for(int j=0;j<text.length();++j) {
-                        detector.append(text.charAt(j));
-                        if (detector.isConvergence()) break;
+                    String lang = "";
+                    try {
+                        lang = detector.detect();
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-*/
-                    String lang = detector.detect();
                     if (!result.containsKey(correctLang)) result.put(correctLang, new ArrayList<String>());
                     result.get(correctLang).add(lang);
                     if (hasOpt("--debug")) System.out.println(correctLang + "," + lang + "," + (text.length()>100?text.substring(0, 100):text));
@@ -273,14 +318,18 @@ public class Command {
         command.addOpt("-d", "directory", "./");
         command.addOpt("-a", "alpha", "" + DEFAULT_ALPHA);
         command.addOpt("-s", "seed", null);
+        command.addOpt("-l", "lang", null);
         command.parse(args);
 
         if (command.hasOpt("--genprofile")) {
             command.generateProfile();
+        } else if (command.hasOpt("--genprofile-text")) {
+            command.generateProfileFromText();
         } else if (command.hasOpt("--detectlang")) {
             command.detectLang();
         } else if (command.hasOpt("--batchtest")) {
             command.batchTest();
         }
     }
+
 }
