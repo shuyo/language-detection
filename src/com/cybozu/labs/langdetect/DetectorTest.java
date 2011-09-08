@@ -2,6 +2,8 @@ package com.cybozu.labs.langdetect;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,5 +71,21 @@ public class DetectorTest {
         Detector detect = DetectorFactory.create();
         detect.append("\u3042\u3042\u3042\u3042a");
         assertEquals(detect.detect(), "ja");
+    }
+    
+    @Test
+    public final void testLangList() throws LangDetectException {
+        List<String> langList = DetectorFactory.getLangList();
+        assertEquals(langList.size(), 3);
+        assertEquals(langList.get(0), "en");
+        assertEquals(langList.get(1), "fr");
+        assertEquals(langList.get(2), "ja");
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public final void testLangListException() throws LangDetectException {
+        List<String> langList = DetectorFactory.getLangList();
+        langList.add("hoge");
+        //langList.add(1, "hoge");
     }
 }

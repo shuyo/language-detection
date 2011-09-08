@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
@@ -103,8 +105,11 @@ public class DetectorFactory {
             if (!instance_.wordLangProbMap.containsKey(word)) {
                 instance_.wordLangProbMap.put(word, new double[langsize]);
             }
-            double prob = profile.freq.get(word).doubleValue() / profile.n_words[word.length()-1];
-            instance_.wordLangProbMap.get(word)[index] = prob;
+            int length = word.length();
+            if (length >= 1 && length <= 3) {
+                double prob = profile.freq.get(word).doubleValue() / profile.n_words[length - 1];
+                instance_.wordLangProbMap.get(word)[index] = prob;
+            }
         }
     }
 
@@ -148,5 +153,9 @@ public class DetectorFactory {
     
     public static void setSeed(long seed) {
         instance_.seed = seed;
+    }
+    
+    public static final List<String> getLangList() {
+        return Collections.unmodifiableList(instance_.langlist);
     }
 }
