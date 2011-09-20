@@ -90,6 +90,31 @@ public class DetectorFactory {
     }
 
     /**
+     * Load profiles from specified directory.
+     * This method must be called once before language detection.
+     *  
+     * @param profileDirectory profile directory path
+     * @throws LangDetectException  Can't open profiles(error code = {@link ErrorCode#FileLoadError})
+     *                              or profile's format is wrong (error code = {@link ErrorCode#FormatError})
+     */
+    public static void loadProfile(ArrayList<String> json_profiles) throws LangDetectException {
+        int index = 0;
+        int langsize = json_profiles.size();
+        if (langsize < 2)
+            throw new LangDetectException(ErrorCode.NeedLoadProfileError, "Need more than 2 profiles");
+            
+        for (String json: json_profiles) {
+            try {
+                LangProfile profile = JSON.decode(json, LangProfile.class);
+                addProfile(profile, index, langsize);
+                ++index;
+            } catch (JSONException e) {
+                throw new LangDetectException(ErrorCode.FormatError, "profile format error");
+            }
+        }
+    }
+
+    /**
      * @param profile
      * @param langsize 
      * @param index 
@@ -114,9 +139,9 @@ public class DetectorFactory {
     }
 
     /**
-     * for only Unit Test
+     * Clear loaded language profiles (reinitialization to be available)
      */
-    static /* package scope */ void clear() {
+    static public void clear() {
         instance_.langlist.clear();
         instance_.wordLangProbMap.clear();
     }
