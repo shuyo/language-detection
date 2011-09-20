@@ -97,7 +97,7 @@ public class DetectorFactory {
      * @throws LangDetectException  Can't open profiles(error code = {@link ErrorCode#FileLoadError})
      *                              or profile's format is wrong (error code = {@link ErrorCode#FormatError})
      */
-    public static void loadProfile(ArrayList<String> json_profiles) throws LangDetectException {
+    public static void loadProfile(List<String> json_profiles) throws LangDetectException {
         int index = 0;
         int langsize = json_profiles.size();
         if (langsize < 2)
