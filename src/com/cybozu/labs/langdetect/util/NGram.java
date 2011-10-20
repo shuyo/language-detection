@@ -75,10 +75,14 @@ public class NGram {
             if (ch<'A' || (ch<'a' && ch >'Z') || ch>'z') ch = ' ';
         } else if (block == UnicodeBlock.LATIN_1_SUPPLEMENT) {
             if (LATIN1_EXCLUDED.indexOf(ch)>=0) ch = ' ';
+        } else if (block == UnicodeBlock.LATIN_EXTENDED_B) {
+            // normalization for Romanian
+            if (ch == '\u0219') ch = '\u015f';  // Small S with comma below => with cedilla
+            if (ch == '\u021b') ch = '\u0163';  // Small T with comma below => with cedilla
         } else if (block == UnicodeBlock.GENERAL_PUNCTUATION) {
             ch = ' ';
         } else if (block == UnicodeBlock.ARABIC) {
-            if (ch == '\u06cc') ch = '\u064a'; 
+            if (ch == '\u06cc') ch = '\u064a';  // Farsi yeh => Arabic yeh
         } else if (block == UnicodeBlock.LATIN_EXTENDED_ADDITIONAL) {
             if (ch >= '\u1ea0') ch = '\u1ec3';
         } else if (block == UnicodeBlock.HIRAGANA) {
