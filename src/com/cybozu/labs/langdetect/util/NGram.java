@@ -2,9 +2,11 @@ package com.cybozu.labs.langdetect.util;
 
 import java.lang.Character.UnicodeBlock;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * 
+ * Cut out N-gram from text. 
  * Users don't use this class directly.
  * @author Nakatani Shuyo
  */
@@ -17,7 +19,7 @@ public class NGram {
     private boolean capitalword_;
 
     /**
-     * 
+     * Constructor.
      */
     public NGram() {
         grams_ = new StringBuffer(" ");
@@ -25,6 +27,7 @@ public class NGram {
     }
 
     /**
+     * Append a character into ngram buffer.
      * @param ch
      */
     public void addChar(char ch) {
@@ -98,8 +101,37 @@ public class NGram {
         }
         return ch;
     }
-    
 
+    /**
+     * Normalizer for Vietnamese.
+     * Normalize Alphabet + Diacritical Mark(U+03xx) into U+1Exx .
+     * @param text
+     * @return normalized text
+     */
+    public static String normalize_vi(String text) {
+        Matcher m = ALPHABET_WITH_DMARK.matcher(text);
+        StringBuffer buf = new StringBuffer();
+        while (m.find()) {
+            int alphabet = TO_NORMALIZE_VI_CHARS.indexOf(m.group(1));
+            int dmark = DMARK_CLASS.indexOf(m.group(2)); // Diacritical Mark
+            m.appendReplacement(buf, NORMALIZED_VI_CHARS[dmark].substring(alphabet, alphabet + 1));
+        }
+        if (buf.length() == 0)
+            return text;
+        m.appendTail(buf);
+        return buf.toString();
+    }
+
+    private static final String[] NORMALIZED_VI_CHARS = {
+            Messages.getString("NORMALIZED_VI_CHARS_0300"),
+            Messages.getString("NORMALIZED_VI_CHARS_0301"),
+            Messages.getString("NORMALIZED_VI_CHARS_0303"),
+            Messages.getString("NORMALIZED_VI_CHARS_0309"),
+            Messages.getString("NORMALIZED_VI_CHARS_0323") };
+    private static final String TO_NORMALIZE_VI_CHARS = Messages.getString("TO_NORMALIZE_VI_CHARS");
+    private static final String DMARK_CLASS = Messages.getString("DMARK_CLASS");
+    private static final Pattern ALPHABET_WITH_DMARK = Pattern.compile("([" + TO_NORMALIZE_VI_CHARS + "])(["
+            + DMARK_CLASS + "])");
     
     /**
      * CJK Kanji Normalization Mapping

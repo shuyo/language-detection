@@ -87,8 +87,7 @@ public class TagExtractorTest {
     @Test
     public final void testCloseTag() {
         TagExtractor extractor = new TagExtractor(null, 0);
-        LangProfile profile = null;
-        extractor.closeTag(profile);    // ignore
+        extractor.closeTag();    // ignore
     }
 
     
@@ -105,7 +104,7 @@ public class TagExtractorTest {
         // normal
         extractor.setTag("abstract");
         extractor.add("This is a sample text.");
-        extractor.closeTag(profile);
+        profile.update(extractor.closeTag());
         assertEquals(extractor.count(), 1);
         assertEquals(profile.n_words[0], 17);  // Thisisasampletext
         assertEquals(profile.n_words[1], 22);  // _T, Th, hi, ...
@@ -114,13 +113,13 @@ public class TagExtractorTest {
         // too short
         extractor.setTag("abstract");
         extractor.add("sample");
-        extractor.closeTag(profile);
+        profile.update(extractor.closeTag());
         assertEquals(extractor.count(), 1);
 
         // other tags
         extractor.setTag("div");
         extractor.add("This is a sample text which is enough long.");
-        extractor.closeTag(profile);
+        profile.update(extractor.closeTag());
         assertEquals(extractor.count(), 1);
     }
 

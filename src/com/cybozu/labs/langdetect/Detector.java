@@ -165,9 +165,10 @@ public class Detector {
     public void append(String text) {
         text = URL_REGEX.matcher(text).replaceAll(" ");
         text = MAIL_REGEX.matcher(text).replaceAll(" ");
+        text = NGram.normalize_vi(text);
         char pre = 0;
         for (int i = 0; i < text.length() && i < max_text_length; ++i) {
-            char c = NGram.normalize(text.charAt(i));
+            char c = text.charAt(i);
             if (c != ' ' || pre != ' ') this.text.append(c);
             pre = c;
         }

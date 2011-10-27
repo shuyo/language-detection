@@ -33,18 +33,14 @@ public class TagExtractor {
             buf_.append(line);
         }
     }
-    public void closeTag(LangProfile profile) {
-        if (profile != null && tag_ == target_ && buf_.length() > threshold_) {
-            NGram gram = new NGram();
-            for(int i=0; i<buf_.length(); ++i) {
-                gram.addChar(buf_.charAt(i));
-                for(int n=1; n<=NGram.N_GRAM; ++n) {
-                    profile.add(gram.get(n));
-                }
-            }
+    public String closeTag() {
+        String st = null;
+        if (tag_ == target_ && buf_.length() > threshold_) {
+            st = buf_.toString();
             ++count_;
         }
         clear();
+        return st;
     }
 
 }

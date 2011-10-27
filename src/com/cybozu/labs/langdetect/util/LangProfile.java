@@ -82,4 +82,21 @@ public class LangProfile {
             
         }
     }
+
+    /**
+     * Update the language profile with (fragmented) text.
+     * Extract n-grams from text and add their frequency into the profile.
+     * @param text (fragmented) text to extract n-grams
+     */
+    public void update(String text) {
+        if (text == null) return;
+        text = NGram.normalize_vi(text);
+        NGram gram = new NGram();
+        for(int i=0; i<text.length(); ++i) {
+            gram.addChar(text.charAt(i));
+            for(int n=1; n<=NGram.N_GRAM; ++n) {
+                add(gram.get(n));
+            }
+        }
+    }
 }
