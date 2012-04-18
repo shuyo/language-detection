@@ -82,13 +82,13 @@ public class Detector {
     /**
      * Constructor.
      * Detector instance can be constructed via {@link DetectorFactory#create()}.
-     * @param factory {@link DetectorFactory} instance (only DetectorFactory inside)
+     * @param profiles {@link DetectorFactory} instance (only DetectorFactory inside)
      */
-    public Detector(DetectorFactory factory) {
-        this.wordLangProbMap = factory.wordLangProbMap;
-        this.langlist = factory.langlist;
+    public Detector(DetectorProfiles profiles) {
+        this.wordLangProbMap = profiles.wordLangProbMap;
+        this.langlist = profiles.langlist;
         this.text = new StringBuffer();
-        this.seed  = factory.seed;
+        this.seed  = profiles.seed;
     }
 
     /**
