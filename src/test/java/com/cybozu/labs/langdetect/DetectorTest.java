@@ -41,4 +41,17 @@ public class DetectorTest {
         assertEquals(langList.get(0), "lang1");
         assertEquals(langList.get(1), "lang2");
     }
+
+    @Test
+    public final void testFactoryFromJsonStringForMultiProfiles() throws LangDetectException {
+        DetectorFactory.clear();
+        ArrayList<String> profiles = new ArrayList<String>();
+        profiles.add(JSON_LANG1);
+        profiles.add(JSON_LANG2);
+        DetectorProfiles profiles2 = DetectorFactory.loadProfile(profiles);
+        Detector detector = DetectorFactory.create(profiles2);
+        detector.append("A");
+        String lang = detector.detect();
+        assertEquals("lang2", lang);
+    }
 }

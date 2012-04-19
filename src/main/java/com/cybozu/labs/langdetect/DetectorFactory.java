@@ -11,7 +11,7 @@ import net.arnx.jsonic.JSONException;
 import com.cybozu.labs.langdetect.util.LangProfile;
 
 /**
- * Language Detector Factory Singleton Class
+ * Language Detector Factory Class
  * 
  * This class manages an initialization and constructions of {@link Detector}. 
  * 
@@ -40,6 +40,7 @@ public class DetectorFactory {
      * This method must be called once before language detection.
      *  
      * @param profileDirectory profile directory path
+     * @return 
      * @throws LangDetectException  Can't open profiles(error code = {@link ErrorCode#FileLoadError})
      *                              or profile's format is wrong (error code = {@link ErrorCode#FormatError})
      */
@@ -181,10 +182,22 @@ public class DetectorFactory {
         return detector;
     }
 
+    /**
+     * Set random seed for coherent detection.
+     * 
+     * Hence language-detection draws random features to reduce bias, 
+     * it will return incoherent language whenever it detects.
+     * When you need coherent detection, you should set a fixed number into seed. 
+     * 
+     * @param seed random seed to set
+     */
     public static void setSeed(long seed) {
         instance_.profiles.setSeed(seed);
     }
     
+    /**
+     * @return languages list in profiles
+     */
     public static final List<String> getLangList() {
         return instance_.profiles.getLangList();
     }
