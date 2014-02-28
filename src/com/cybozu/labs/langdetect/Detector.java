@@ -312,7 +312,9 @@ public class Detector {
                 formatter.format(" %s:%.5f", langlist.get(j), p);
             }
         }
-        return formatter.toString();
+        String string = formatter.toString();
+        formatter.close();
+        return string;
     }
     
     /**
