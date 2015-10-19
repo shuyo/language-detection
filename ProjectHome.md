@@ -84,7 +84,7 @@ class LangDetectSample {
 @misc{nakatani2010langdetect,
   title  = {Language Detection Library for Java},
   author = {Shuyo, Nakatani}, 
-  url    = {http://code.google.com/p/language-detection/},
+  url    = {https://github.com/shuyo/language-detection},
   year   = {2010}
 }
 ```
