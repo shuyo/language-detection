@@ -83,7 +83,7 @@ class LangDetectSample {
 ```
 @misc{nakatani2010langdetect,
   title  = {Language Detection Library for Java},
-  author = {Shuyo, Nakatani}, 
+  author = {Shuyo Nakatani}, 
   url    = {https://github.com/shuyo/language-detection},
   year   = {2010}
 }
