@@ -1,12 +1,10 @@
 package com.cybozu.labs.langdetect;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.io.*;
+import java.net.URL;
+import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import net.arnx.jsonic.JSON;
 import net.arnx.jsonic.JSONException;
@@ -170,8 +168,23 @@ public class DetectorFactory {
     }
 
     static private Detector createDetector() throws LangDetectException {
-        if (instance_.langlist.size()==0)
-            throw new LangDetectException(ErrorCode.NeedLoadProfileError, "need to load profiles");
+        if (instance_.langlist.size()==0){
+            // throw new LangDetectException(ErrorCode.NeedLoadProfileError, "need to load profiles");
+
+            //if can not load self profiles，load default profiles
+            File file = new File("profiles");
+            if(file.exists()){
+                loadProfile(file);
+            }else{
+                try{
+                loadProfile(getDefaultProfilePath());
+                }catch (IOException e){
+                    throw new LangDetectException(ErrorCode.FileLoadError,"can't load default profiles");
+                }
+                System.out.println("加载了默认的语言库");
+            }
+        }
+
         Detector detector = new Detector(instance_);
         return detector;
     }
@@ -182,5 +195,33 @@ public class DetectorFactory {
     
     public static final List<String> getLangList() {
         return Collections.unmodifiableList(instance_.langlist);
+    }
+
+    /**
+     * get default profiles string
+     *
+     * @return default profiles string collection
+     **/
+    private static List<String> getDefaultProfilePath() throws IOException {
+        List<String> list = new ArrayList<>();
+        String path = DetectorFactory.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        JarFile localJarFile = null;
+        localJarFile = new JarFile(new File(path));
+        Enumeration<JarEntry> files = localJarFile.entries();
+        while (files.hasMoreElements()) {
+            String innerFile = files.nextElement().getName();
+            if (innerFile.startsWith("profiles" + "/")) {
+                InputStream inputStream = DetectorFactory.class.getClassLoader().getResourceAsStream(innerFile);
+                BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder builder = new StringBuilder();
+                String line;
+                while (((line = br.readLine()) != null)) {
+                    builder.append(line);
+                    break;
+                }
+                list.add(builder.toString());
+            }
+        }
+        return list;
     }
 }
