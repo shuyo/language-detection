@@ -93,7 +93,7 @@ public class DetectorFactory {
      * Load profiles from specified directory.
      * This method must be called once before language detection.
      *  
-     * @param profileDirectory profile directory path
+     * @param json_profiles profile directory path
      * @throws LangDetectException  Can't open profiles(error code = {@link ErrorCode#FileLoadError})
      *                              or profile's format is wrong (error code = {@link ErrorCode#FormatError})
      */
@@ -116,11 +116,11 @@ public class DetectorFactory {
 
     /**
      * @param profile
-     * @param langsize 
+     * @param langSize
      * @param index 
      * @throws LangDetectException 
      */
-    static /* package scope */ void addProfile(LangProfile profile, int index, int langsize) throws LangDetectException {
+    static /* package scope */ void addProfile(LangProfile profile, int index, int langSize) throws LangDetectException {
         String lang = profile.name;
         if (instance_.langlist.contains(lang)) {
             throw new LangDetectException(ErrorCode.DuplicateLangError, "duplicate the same language profile");
@@ -128,7 +128,7 @@ public class DetectorFactory {
         instance_.langlist.add(lang);
         for (String word: profile.freq.keySet()) {
             if (!instance_.wordLangProbMap.containsKey(word)) {
-                instance_.wordLangProbMap.put(word, new double[langsize]);
+                instance_.wordLangProbMap.put(word, new double[langSize]);
             }
             int length = word.length();
             if (length >= 1 && length <= 3) {
